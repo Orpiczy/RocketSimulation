@@ -8,7 +8,7 @@ StatusWindow::StatusWindow(const Vector2i &mainWindowPosition) {
     resolution.y = common::SIDE_WINDOW_Y_SIZE;
  
     _window.create(VideoMode(resolution.x, resolution.y),
-        _windowName ,Style::None);
+        _windowName , common::DEFAULT_WINDOW_STYLE);
  
     _backgroundTexture.loadFromFile(common::IMG_ABS_PATH + "background3.jpg");
  
@@ -18,8 +18,8 @@ StatusWindow::StatusWindow(const Vector2i &mainWindowPosition) {
         common::SIDE_WINDOW_Y_SIZE / _backgroundSprite.getLocalBounds().height);
 
     Vector2i windowPosition {0,0};
-    windowPosition.x = mainWindowPosition.x + common::MAIN_WINDOW_X_SIZE + common::SIDE_WINDOW_X_MARGIN_SIZE;
-    windowPosition.y = mainWindowPosition.y + (common::SIDE_WINDOW_Y_SIZE + common::SIDE_WINDOW_Y_MARGIN_SIZE) * _windowRow ;
+    windowPosition.x = mainWindowPosition.x + common::MAIN_WINDOW_X_SIZE + common::X_MARGIN_SIZE;
+    windowPosition.y = mainWindowPosition.y + (common::SIDE_WINDOW_Y_SIZE + common::Y_MARGIN_SIZE) * _windowRow ;
     _window.setPosition(windowPosition);
 }
 

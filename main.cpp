@@ -1,14 +1,13 @@
-#include <iostream>
 #include "include/SimulationCore.hpp"
+#include <iostream>
 
 int main() {
-    SimulationCore simcore;
-    simcore.run();
-    // SimMainWindow mainWindow;
-    // mainWindow.start();
-    return 0;
+  SimulationCore simcore;
+  simcore.run();
+  // SimMainWindow mainWindow;
+  // mainWindow.start();
+  return 0;
 }
-
 
 // #include <iostream>
 // #include <filesystem>
@@ -18,5 +17,6 @@ int main() {
 
 /* TODO:
 1. Jak w cmaku dodac pliki by uproscic sciezke includow
+2. Ze Switchy w CommandWindow zrob liste
 
 */

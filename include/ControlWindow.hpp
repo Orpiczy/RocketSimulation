@@ -1,22 +1,33 @@
-#pragma once 
+#pragma once
+#include "../assets/graphics/SpriteObjects/include/Switch.hpp"
+#include "../common/IWindow.hpp"
 #include <SFML/Graphics.hpp>
-#include "../common/ISideWindow.hpp"
 using namespace sf;
 
-class ControlWindow: public ISideWindow{
+class ControlWindow : public IWindow {
 public:
-    ControlWindow(const Vector2i &mainWindowPosition);
-    void start();
+  ControlWindow() : ControlWindow({0, 0}){};
+  ControlWindow(const Vector2i &mainWindowPosition);
+  void start();
 
 private:
-    RenderWindow _window; 
-    Texture _backgroundTexture; 
-    Sprite _backgroundSprite;
+  RenderWindow _window;
+  Texture _backgroundTexture;
+  Sprite _backgroundSprite;
+  sf::Font font;
+  const int MAX_NUMBER_OF_ITEMS{3};
+  sf::Text descriptions[3];
 
-    const int _windowRow = 2;
-    const char* _windowName = "Control Window";
+  const char *_windowName = "Control Window";
 
-    void input();
-    void update(float dtAsSeconds);
-    void draw();
+  spriteObjects::Switch _mainThrusterSwitch;
+  spriteObjects::Switch _leftThrusterSwitch;
+  spriteObjects::Switch _rightThrusterSwitch;
+
+  void input();
+  void update(float dtAsSeconds);
+  void draw();
+
+  // HELPERS
+  void setElementsPosition();
 };

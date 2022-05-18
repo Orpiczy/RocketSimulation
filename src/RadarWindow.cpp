@@ -3,12 +3,8 @@
 
 RadarWindow::RadarWindow(const Vector2i &mainWindowPosition) {
 
-    Vector2f resolution;
-    resolution.x = common::SIDE_WINDOW_X_SIZE;
-    resolution.y = common::SIDE_WINDOW_Y_SIZE;
- 
-    _window.create(VideoMode(resolution.x, resolution.y),
-        _windowName , Style::None);
+    _window.create(VideoMode(common::SIDE_WINDOW_X_SIZE, common::SIDE_WINDOW_Y_SIZE),
+        _windowName , common::DEFAULT_WINDOW_STYLE);
  
     _backgroundTexture.loadFromFile(common::IMG_ABS_PATH + "background3.jpg");
  
@@ -18,8 +14,8 @@ RadarWindow::RadarWindow(const Vector2i &mainWindowPosition) {
         common::SIDE_WINDOW_Y_SIZE / _backgroundSprite.getLocalBounds().height);
 
     Vector2i windowPosition {0,0};
-    windowPosition.x = mainWindowPosition.x + common::MAIN_WINDOW_X_SIZE + common::SIDE_WINDOW_X_MARGIN_SIZE;
-    windowPosition.y = mainWindowPosition.y + (common::SIDE_WINDOW_Y_SIZE + common::SIDE_WINDOW_Y_MARGIN_SIZE) * _windowRow ;
+    windowPosition.x = mainWindowPosition.x + common::RADAR_WINDOW_X_RELATIVE_POS;
+    windowPosition.y = mainWindowPosition.y + common::RADAR_WINDOW_Y_RELATIVE_POS;
     _window.setPosition(windowPosition);
 }
 
