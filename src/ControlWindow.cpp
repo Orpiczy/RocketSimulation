@@ -22,23 +22,31 @@ ControlWindow::ControlWindow(const Vector2i &mainWindowPosition) {
       mainWindowPosition.y + common::CONTROL_WINDOW_Y_RELATIVE_POS;
   _window.setPosition(absWindowPosition);
 
-  setElementsPosition();
+  // setElementsPosition();
+
+  float switchesXSize = _window.getSize().x / 4;
+  float switchesYSize = _window.getSize().y;
+  _thrusterSwitches.align(_window.getPosition(), {switchesXSize, switchesYSize},
+                          common::COMMAND_WINDOW_OBJECTS_X_MARGIN,
+                          common::COMMAND_WINDOW_OBJECTS_Y_MARGIN);
 }
 
 void ControlWindow::setElementsPosition() {
-  Vector2i position = _window.getPosition();
-  _mainThrusterSwitch.setPosition({common::COMMAND_WINDOW_OBJECTS_X_MARGIN,
-                                   common::COMMAND_WINDOW_OBJECTS_Y_MARGIN});
+  // Vector2i position = _window.getPosition();
+  // _mainThrusterSwitch.setPosition({common::COMMAND_WINDOW_OBJECTS_X_MARGIN,
+  //                                  common::COMMAND_WINDOW_OBJECTS_Y_MARGIN});
 
-  _leftThrusterSwitch.setPosition(
-      {_mainThrusterSwitch.getPosition().x,
-       _mainThrusterSwitch.getPosition().y + _mainThrusterSwitch.getSize().y +
-           +common::COMMAND_WINDOW_OBJECTS_Y_MARGIN});
+  // _leftThrusterSwitch.setPosition(
+  //     {_mainThrusterSwitch.getPosition().x,
+  //      _mainThrusterSwitch.getPosition().y + _mainThrusterSwitch.getSize().y
+  //      +
+  //          +common::COMMAND_WINDOW_OBJECTS_Y_MARGIN});
 
-  _rightThrusterSwitch.setPosition(
-      {_leftThrusterSwitch.getPosition().x,
-       _leftThrusterSwitch.getPosition().y + _leftThrusterSwitch.getSize().y +
-           +common::COMMAND_WINDOW_OBJECTS_Y_MARGIN});
+  // _rightThrusterSwitch.setPosition(
+  //     {_leftThrusterSwitch.getPosition().x,
+  //      _leftThrusterSwitch.getPosition().y + _leftThrusterSwitch.getSize().y
+  //      +
+  //          +common::COMMAND_WINDOW_OBJECTS_Y_MARGIN});
 }
 
 void ControlWindow::start() {
@@ -64,11 +72,19 @@ void ControlWindow::input() {
 
 void ControlWindow::update(float dtAsSeconds) {}
 
+static bool wasPrinted{false};
 void ControlWindow::draw() {
   _window.clear(Color::White);
   _window.draw(_backgroundSprite);
-  _window.draw(_mainThrusterSwitch);
-  _window.draw(_leftThrusterSwitch);
-  _window.draw(_rightThrusterSwitch);
-  _window.display();
+  for (auto &switchElement : _thrusterSwitches.get()) {
+    _window.draw(switchElement);
+  }
+  if (not wasPrinted) {
+    for (auto &switchElement : _thrusterSwitches.get()) {
+      std::cout << "actualSize x = " << switchElement.getSize().x
+                << "y = " << switchElement.getSize().y << std::endl;
+    }
+    wasPrinted = true;
+    _window.display();
+  }
 }

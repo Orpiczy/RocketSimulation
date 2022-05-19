@@ -1,5 +1,6 @@
 #pragma once
 #include "../assets/graphics/SpriteObjects/include/Switch.hpp"
+#include "../common/Container.hpp"
 #include "../common/IWindow.hpp"
 #include <SFML/Graphics.hpp>
 using namespace sf;
@@ -20,9 +21,11 @@ private:
 
   const char *_windowName = "Control Window";
 
-  spriteObjects::Switch _mainThrusterSwitch;
-  spriteObjects::Switch _leftThrusterSwitch;
-  spriteObjects::Switch _rightThrusterSwitch;
+  // spriteObjects::Switch _mainThrusterSwitch;
+  // spriteObjects::Switch _leftThrusterSwitch;
+  // spriteObjects::Switch _rightThrusterSwitch;
+
+  Container<spriteObjects::Switch, 3> _thrusterSwitches{};
 
   void input();
   void update(float dtAsSeconds);
