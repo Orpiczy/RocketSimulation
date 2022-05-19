@@ -25,6 +25,7 @@ public:
   void click() { state = !state; }
   void setOn() { state = true; }
   void setOff() { state = false; }
+  bool getState() { return state; }
 
   void setPosition(const Vector2f &designatedPosition) override;
   void setSizeAndScale(const Vector2f &size, bool keepProportion) override;

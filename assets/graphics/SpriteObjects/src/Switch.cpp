@@ -18,9 +18,8 @@ void Switch::checkStateAndSetProperSprite() {
 
   _switchSprite.setTexture(_switchTexture);
   // origin ignoruje wszystkie tranformacje
-  _switchSprite.setOrigin(
-      Vector2f(_switchSprite.getTexture()->getSize().x * 0.5,
-               _switchSprite.getTexture()->getSize().y * 0.5));
+  _switchSprite.setOrigin(_switchSprite.getTexture()->getSize().x * 0.5,
+                          _switchSprite.getTexture()->getSize().y * 0.5);
 
   setSizeAndScale(_switchSize, true);
 }

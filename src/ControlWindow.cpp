@@ -26,9 +26,16 @@ ControlWindow::ControlWindow(const Vector2i &mainWindowPosition) {
 
   float switchesXSize = _window.getSize().x / 4;
   float switchesYSize = _window.getSize().y;
-  _thrusterSwitches.align(_window.getPosition(), {switchesXSize, switchesYSize},
+  _thrusterSwitches.align({0.0, 0.0}, {switchesXSize, switchesYSize},
                           common::COMMAND_WINDOW_OBJECTS_X_MARGIN,
                           common::COMMAND_WINDOW_OBJECTS_Y_MARGIN);
+
+  Vector2f descriptionDesignatedPosition{
+      _thrusterSwitches.getContainerDimension().x, 0};
+  _descriptions.align(descriptionDesignatedPosition,
+                      {_window.getSize().x - switchesXSize, switchesYSize},
+                      common::COMMAND_WINDOW_OBJECTS_X_MARGIN,
+                      common::COMMAND_WINDOW_OBJECTS_Y_MARGIN);
 }
 
 void ControlWindow::setElementsPosition() {
@@ -68,23 +75,28 @@ void ControlWindow::input() {
   if (Keyboard::isKeyPressed(Keyboard::Escape)) {
     _window.close();
   }
+
+  if (sf::Mouse::isButtonPressed(sf::Mouse::Left)) {
+    auto mousePosition = sf::Mouse::getPosition(
+        _window); // Mouse position relative to the window
+    auto globalMousePosition = _window.mapPixelToCoords(mousePosition);
+    _thrusterSwitches.click(globalMousePosition);
+  }
 }
 
 void ControlWindow::update(float dtAsSeconds) {}
 
-static bool wasPrinted{false};
 void ControlWindow::draw() {
   _window.clear(Color::White);
   _window.draw(_backgroundSprite);
-  for (auto &switchElement : _thrusterSwitches.get()) {
+
+  for (auto &switchElement : _thrusterSwitches.getElements()) {
     _window.draw(switchElement);
   }
-  if (not wasPrinted) {
-    for (auto &switchElement : _thrusterSwitches.get()) {
-      std::cout << "actualSize x = " << switchElement.getSize().x
-                << "y = " << switchElement.getSize().y << std::endl;
-    }
-    wasPrinted = true;
-    _window.display();
+
+  for (auto &description : _descriptions.getElements()) {
+    _window.draw(description);
   }
+
+  _window.display();
 }

@@ -1,31 +1,57 @@
 #pragma once
 #include "IContainerElement.hpp"
 #include <SFML/Graphics.hpp>
+#include <optional>
 
 template <class T, int nrOfElements> class Container {
 public:
-  operator std::array<T, nrOfElements> &() { return elementsContainer; }
+  operator std::array<T, nrOfElements> &() { return _elementsContainer; }
 
-  void align(sf::Vector2i referencePoint, sf::Vector2f size, float marginX,
+  const Vector2f getContainerDimension() { return _containerDimensions; }
+
+  void align(sf::Vector2f referencePoint, sf::Vector2f size, float marginX,
              float marginY, bool keepProportion = false) {
-    float fixedXSize = (size.x - 2 * marginX);
-    float fixedYSize = (size.y - (nrOfElements + 1) * marginY) / nrOfElements;
-    sf::Vector2f fixedSize{fixedXSize, fixedYSize};
 
-    float columnXPosition = marginX + fixedXSize / 2;
+    float elementWidth = (size.x - 2 * marginX);
+    float elementHeight =
+        (size.y - (nrOfElements + 1) * marginY) / nrOfElements;
 
-    for (std::size_t i = 0; i != elementsContainer.size(); i++) {
-      elementsContainer.at(i).setSizeAndScale(fixedSize, true);
-      auto rowYPosition = marginY + fixedYSize / 2 + (marginY + fixedYSize) * i;
-      elementsContainer.at(i).setPosition({columnXPosition, rowYPosition});
+    float columnPosition = referencePoint.x + marginX + elementWidth / 2;
+    float rowPosition = referencePoint.y + marginY + elementHeight / 2;
+
+    std::cout << "Switch: " << std::endl;
+    for (auto &el : _elementsContainer) {
+      el.setSizeAndScale({elementWidth, elementHeight}, true);
+      el.setPosition({columnPosition, rowPosition});
+      std::cout << "row pos = " << rowPosition << std::endl;
+      rowPosition += marginY + elementHeight;
     }
-    std::cout << "fixedXSize = " << fixedXSize
-              << ", fixedYSize = " << fixedYSize << std::endl;
+
+    _containerDimensions = size;
   }
 
-  std::array<T, nrOfElements> &get() { return elementsContainer; }
+  bool click(const Vector2f &globalMousePosition) {
+    if (_timer.getElapsedTime() < _keyPressDelay) {
+      return false;
+    }
 
-private:
-  std::array<T, nrOfElements> elementsContainer;
-  //   std::array<IContainerElement, nrOfElements> elementsContainer {};
+    for (auto &el : _elementsContainer) {
+      if (static_cast<Sprite>(el).getGlobalBounds().contains(
+              globalMousePosition)) {
+        el.click();
+        _timer.restart();
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  std::array<T, nrOfElements> &getElements() { return _elementsContainer; }
+
+protected:
+  std::array<T, nrOfElements> _elementsContainer;
+  sf::Time _keyPressDelay{sf::milliseconds(100)};
+  sf::Clock _timer;
+  Vector2f _containerDimensions{0, 0};
 };

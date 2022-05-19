@@ -7,6 +7,7 @@ namespace common {
 static const std::string PROJECT_PATH{
     "/home/black_wraith/Documents/AIR/S8/RealTime/RocketSimulation/"};
 static const std::string IMG_ABS_PATH{PROJECT_PATH + "assets/graphics/img/"};
+static const std::string FONT_ABS_PATH{PROJECT_PATH + "assets/fonts/"};
 
 static const int RESOLUTION_X{1920};
 static const int RESOLUTION_Y{1080};
