@@ -1,6 +1,6 @@
 #pragma once
-#include "../common/IWindow.hpp"
-#include "../common/TextContainer.hpp"
+#include "../common/interfaces/IWindow.hpp"
+#include "../common/templates/TextContainer.hpp"
 
 #include <SFML/Graphics.hpp>
 

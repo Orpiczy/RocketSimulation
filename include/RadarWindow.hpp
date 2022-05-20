@@ -1,5 +1,5 @@
 #pragma once
-#include "../common/IWindow.hpp"
+#include "../common/interfaces/IWindow.hpp"
 #include <SFML/Graphics.hpp>
 
 using namespace sf;

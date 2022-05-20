@@ -11,6 +11,7 @@ StatusWindow::StatusWindow(const Vector2i &mainWindowPosition) {
 
 void StatusWindow::setWindowSizeAndPosition(
     const Vector2i &mainWindowPosition) {
+
   auto windowLength{common::SIDE_WINDOW_Y_SIZE};
   auto windowHeight{common::SIDE_WINDOW_Y_SIZE};
 

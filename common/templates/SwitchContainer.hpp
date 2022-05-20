@@ -1,5 +1,5 @@
 #pragma once
-#include "../assets/graphics/SpriteObjects/include/Switch.hpp"
+#include "../../assets/graphics/SpriteObjects/include/Switch.hpp"
 #include "Container.hpp"
 
 template <int nrOfElements>

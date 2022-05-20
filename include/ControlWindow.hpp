@@ -1,8 +1,8 @@
 #pragma once
 #include "../assets/graphics/SpriteObjects/include/Switch.hpp"
-#include "../common/IWindow.hpp"
-#include "../common/SwitchContainer.hpp"
-#include "../common/TextContainer.hpp"
+#include "../common/interfaces/IWindow.hpp"
+#include "../common/templates/SwitchContainer.hpp"
+#include "../common/templates/TextContainer.hpp"
 #include <SFML/Graphics.hpp>
 using namespace sf;
 
@@ -17,7 +17,7 @@ private:
   Texture _backgroundTexture;
   Sprite _backgroundSprite;
   sf::Font font;
-  const int MAX_NUMBER_OF_ITEMS{3};
+
   const char *_windowName = "Control Window";
 
   // spriteObjects::Switch _mainThrusterSwitch;
@@ -31,5 +31,7 @@ private:
   void draw();
 
   // HELPERS
-  void setElementsPosition();
+  void setWindowSizeAndPosition(const Vector2i &mainWindowPosition);
+  void setTexturesAndSprites();
+  void setUpElements();
 };
