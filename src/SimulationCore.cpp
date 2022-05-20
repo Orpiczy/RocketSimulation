@@ -7,12 +7,15 @@
 void SimulationCore::run() {
   // MainWindow mainWindow;
   // ControlWindow controlWindow(mainWindow.getPosition());
-  ControlWindow controlWindow;
+  // ControlWindow controlWindow;
   // RadarWindow radarWindow(mainWindow.getPosition());
+  // RadarWindow radarWindow;
   // StatusWindow statusWindow(mainWindow.getPosition());
+  StatusWindow statusWindow;
+  statusWindow.start();
 
   // mainWindow.start();
-  controlWindow.start();
-  //   radarWindow.start();
-  //   statusWindow.start();
+  // controlWindow.start();
+  // radarWindow.start();
+  //    statusWindow.start();
 }

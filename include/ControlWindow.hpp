@@ -23,7 +23,7 @@ private:
   // spriteObjects::Switch _mainThrusterSwitch;
   // spriteObjects::Switch _leftThrusterSwitch;
   // spriteObjects::Switch _rightThrusterSwitch;
-  TextContainer<3> _descriptions;
+  TextContainer<3> _descriptions{};
   SwitchContainer<3> _thrusterSwitches{};
 
   void input();

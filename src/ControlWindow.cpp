@@ -7,7 +7,8 @@ ControlWindow::ControlWindow(const Vector2i &mainWindowPosition) {
       VideoMode(common::CONTROL_WINDOW_X_SIZE, common::CONTROL_WINDOW_Y_SIZE),
       _windowName, common::DEFAULT_WINDOW_STYLE);
 
-  _backgroundTexture.loadFromFile(common::IMG_ABS_PATH + "background3.jpg");
+  _backgroundTexture.loadFromFile(common::IMG_ABS_PATH +
+                                  "blackBackground1.jpg");
 
   _backgroundSprite.setTexture(_backgroundTexture);
   _backgroundSprite.setScale(common::CONTROL_WINDOW_X_SIZE /
@@ -32,28 +33,12 @@ ControlWindow::ControlWindow(const Vector2i &mainWindowPosition) {
 
   Vector2f descriptionDesignatedPosition{
       _thrusterSwitches.getContainerDimension().x, 0};
+
   _descriptions.align(descriptionDesignatedPosition,
                       {_window.getSize().x - switchesXSize, switchesYSize},
                       common::COMMAND_WINDOW_OBJECTS_X_MARGIN,
-                      common::COMMAND_WINDOW_OBJECTS_Y_MARGIN);
-}
-
-void ControlWindow::setElementsPosition() {
-  // Vector2i position = _window.getPosition();
-  // _mainThrusterSwitch.setPosition({common::COMMAND_WINDOW_OBJECTS_X_MARGIN,
-  //                                  common::COMMAND_WINDOW_OBJECTS_Y_MARGIN});
-
-  // _leftThrusterSwitch.setPosition(
-  //     {_mainThrusterSwitch.getPosition().x,
-  //      _mainThrusterSwitch.getPosition().y + _mainThrusterSwitch.getSize().y
-  //      +
-  //          +common::COMMAND_WINDOW_OBJECTS_Y_MARGIN});
-
-  // _rightThrusterSwitch.setPosition(
-  //     {_leftThrusterSwitch.getPosition().x,
-  //      _leftThrusterSwitch.getPosition().y + _leftThrusterSwitch.getSize().y
-  //      +
-  //          +common::COMMAND_WINDOW_OBJECTS_Y_MARGIN});
+                      common::COMMAND_WINDOW_OBJECTS_Y_MARGIN,
+                      LayoutType::columnLayout);
 }
 
 void ControlWindow::start() {

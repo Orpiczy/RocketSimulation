@@ -84,4 +84,7 @@ static const int SWITCH_Y_MAX_SIZE{
 static const int COMMAND_WINDOW_OBJECTS_X_MARGIN{5};
 static const int COMMAND_WINDOW_OBJECTS_Y_MARGIN{5};
 
+static const int STATUS_WINDOW_OBJECTS_X_MARGIN{5};
+static const int STATUS_WINDOW_OBJECTS_Y_MARGIN{5};
+
 } // namespace common
