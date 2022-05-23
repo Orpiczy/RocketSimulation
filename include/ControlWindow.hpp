@@ -1,15 +1,16 @@
 #pragma once
 #include "../assets/graphics/SpriteObjects/include/Switch.hpp"
+#include "../common/classes/SimpleLogger.hpp"
 #include "../common/interfaces/IWindow.hpp"
 #include "../common/templates/SwitchContainer.hpp"
 #include "../common/templates/TextContainer.hpp"
 #include <SFML/Graphics.hpp>
 using namespace sf;
 
-class ControlWindow : public IWindow {
+class ControlWindow : public IWindow, public SimpleLogger {
 public:
-  ControlWindow() : ControlWindow({0, 0}){};
-  ControlWindow(const Vector2i &mainWindowPosition);
+  ControlWindow(const Vector2i &mainWindowPosition = {0, 0},
+                bool isLogInfoEnable = true, bool isLogErrorEnable = true);
   void start();
 
 private:

@@ -9,6 +9,7 @@ static const std::string PROJECT_PATH{
 static const std::string IMG_ABS_PATH{PROJECT_PATH + "assets/graphics/img/"};
 static const std::string FONT_ABS_PATH{PROJECT_PATH + "assets/fonts/"};
 
+static const sf::Vector2i REFERNCE_POINT{0, 0};
 static const int RESOLUTION_X{1920};
 static const int RESOLUTION_Y{1080};
 static const int X_MARGIN_SIZE{10};

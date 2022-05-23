@@ -1,4 +1,5 @@
 #pragma once
+#include "../common/classes/SimpleLogger.hpp"
 #include "../common/interfaces/IWindow.hpp"
 #include "../common/templates/TextContainer.hpp"
 
@@ -6,10 +7,10 @@
 
 using namespace sf;
 
-class StatusWindow : public IWindow {
+class StatusWindow : public IWindow, public SimpleLogger {
 public:
-  StatusWindow() : StatusWindow({0, 0}){};
-  StatusWindow(const Vector2i &mainWindowPosition);
+  StatusWindow(const Vector2i &mainWindowPosition = {0, 0},
+               bool isLogInfoEnable = true, bool isLogErrorEnable = true);
   void start();
 
 private:

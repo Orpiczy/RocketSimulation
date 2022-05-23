@@ -3,7 +3,9 @@
 // #include <chrono>
 // #include <thread>
 
-MainWindow::MainWindow() {
+MainWindow::MainWindow(const Vector2i &referencePoint, bool isLogInfoEnable,
+                       bool isLogErrorEnable)
+    : SimpleLogger(isLogInfoEnable, isLogErrorEnable) {
 
   _window.create(
       VideoMode(common::MAIN_WINDOW_X_SIZE, common::MAIN_WINDOW_Y_SIZE),
@@ -16,12 +18,15 @@ MainWindow::MainWindow() {
       common::MAIN_WINDOW_X_SIZE / _backgroundSprite.getLocalBounds().width,
       common::MAIN_WINDOW_Y_SIZE / _backgroundSprite.getLocalBounds().height);
 
-  _window.setPosition({0, 0});
+  _window.setPosition(referencePoint);
+
+  LG_INF("MAIN WINDOW - CREATED");
 }
 
 Vector2i MainWindow::getPosition() { return _window.getPosition(); }
 void MainWindow::MainWindow::start() {
 
+  LG_INF("MAIN WINDOW - LOOP HAS STARTED");
   Clock clock;
   while (_window.isOpen()) {
     Time dt = clock.restart();
@@ -31,11 +36,6 @@ void MainWindow::MainWindow::start() {
     draw();
     sf::Event event;
     _window.pollEvent(event);
-
-    // FIXME:
-    // using namespace std::chrono_literals;
-    // std::this_thread::sleep_for(500ms);
-    // std::cout<<"I sleep"<<std::endl;
   }
 }
 
@@ -49,6 +49,7 @@ void MainWindow::MainWindow::input() {
   // }
 
   if (Keyboard::isKeyPressed(Keyboard::Escape)) {
+    LG_INF("MAIN WINDOW - ESC WAS PRESSED, CLOSING WINDOW, EXITING LOOP");
     _window.close();
   }
 

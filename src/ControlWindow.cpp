@@ -1,14 +1,17 @@
 #include "../include/ControlWindow.hpp"
 #include "../common/Common.hpp"
 
-ControlWindow::ControlWindow(const Vector2i &mainWindowPosition) {
+ControlWindow::ControlWindow(const Vector2i &mainWindowPosition,
+                             bool isLogInfoEnable, bool isLogErrorEnable)
+    : SimpleLogger(isLogInfoEnable, isLogErrorEnable) {
   setWindowSizeAndPosition(mainWindowPosition);
   setTexturesAndSprites();
   setUpElements();
+  LG_INF("CONTROL WINDOW - CREATED");
 }
 
 void ControlWindow::start() {
-
+  LG_INF("CONTROL WINDOW - LOOP HAS STARTED");
   Clock clock;
   while (_window.isOpen()) {
     Time dt = clock.restart();
@@ -24,10 +27,13 @@ void ControlWindow::start() {
 void ControlWindow::input() {
 
   if (Keyboard::isKeyPressed(Keyboard::Escape)) {
+    LG_INF("CONTROL WINDOW - ESC WAS PRESSED, CLOSING WINDOW, EXITING LOOP");
     _window.close();
   }
 
   if (sf::Mouse::isButtonPressed(sf::Mouse::Left)) {
+    LG_INF("CONTROL WINDOW - LMB WAS PRESSED - CHECKING POSITION AND CLICKING "
+           "SWITCH IF NEEDED");
     auto mousePosition = sf::Mouse::getPosition(
         _window); // Mouse position relative to the window
     auto globalMousePosition = _window.mapPixelToCoords(mousePosition);

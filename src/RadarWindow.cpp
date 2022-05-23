@@ -1,11 +1,48 @@
 #include "../include/RadarWindow.hpp"
 #include "../common/Common.hpp"
 
-RadarWindow::RadarWindow(const Vector2i &mainWindowPosition) {
+RadarWindow::RadarWindow(const Vector2i &mainWindowPosition,
+                         bool isLogInfoEnable, bool isLogErrorEnable)
+    : SimpleLogger(isLogInfoEnable, isLogErrorEnable) {
   setWindowSizeAndPosition(mainWindowPosition);
   setMaxRadarSpriteDistane();
   setTexturesAndSprites();
+  LG_INF("RADAR WINDOW - CREATED");
 }
+
+void RadarWindow::start() {
+  LG_INF("RADAR WINDOW - LOOP HAS STARTED");
+  Clock clock;
+  while (_window.isOpen()) {
+    Time dt = clock.restart();
+    float dtAsSeconds = dt.asSeconds();
+    input();
+    update(dtAsSeconds);
+    draw();
+    sf::Event event;
+    _window.pollEvent(event);
+  }
+}
+
+void RadarWindow::input() {
+
+  if (Keyboard::isKeyPressed(Keyboard::Escape)) {
+    LG_INF("RADAR WINDOW - ESC WAS PRESSED, CLOSING WINDOW, EXITING LOOP");
+    _window.close();
+  }
+}
+
+void RadarWindow::update(float dtAsSeconds) {}
+
+void RadarWindow::draw() {
+  _window.clear(Color::White);
+  _window.draw(_backgroundSprite);
+  _window.draw(_rocketSprite);
+  _window.draw(_moonSprite);
+  _window.display();
+}
+
+//// HELPERS
 
 void RadarWindow::setMaxRadarSpriteDistane() {
   _maxRadarSpriteDistane = _window.getSize().y / 1;
@@ -55,36 +92,3 @@ void RadarWindow::setTexturesAndSprites() {
 
   _moonSprite.setPosition(_window.getSize().x / 2, moonIconRealYSize / 2);
 }
-
-void RadarWindow::start() {
-
-  Clock clock;
-  while (_window.isOpen()) {
-    Time dt = clock.restart();
-    float dtAsSeconds = dt.asSeconds();
-    input();
-    update(dtAsSeconds);
-    draw();
-    sf::Event event;
-    _window.pollEvent(event);
-  }
-}
-
-void RadarWindow::input() {
-
-  if (Keyboard::isKeyPressed(Keyboard::Escape)) {
-    _window.close();
-  }
-}
-
-void RadarWindow::update(float dtAsSeconds) {}
-
-void RadarWindow::draw() {
-  _window.clear(Color::White);
-  _window.draw(_backgroundSprite);
-  _window.draw(_rocketSprite);
-  _window.draw(_moonSprite);
-  _window.display();
-}
-
-//#00f434

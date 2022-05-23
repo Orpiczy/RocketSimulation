@@ -1,7 +1,9 @@
 #include "../include/StatusWindow.hpp"
 #include "../common/Common.hpp"
 
-StatusWindow::StatusWindow(const Vector2i &mainWindowPosition) {
+StatusWindow::StatusWindow(const Vector2i &mainWindowPosition,
+                           bool isLogInfoEnable, bool isLogErrorEnable)
+    : SimpleLogger(isLogInfoEnable, isLogErrorEnable) {
   setWindowSizeAndPosition(mainWindowPosition);
   setTexturesAndSprites();
   updateDisplayedGaugeValues({2, 23, 67, 53});
@@ -9,59 +11,9 @@ StatusWindow::StatusWindow(const Vector2i &mainWindowPosition) {
   setUpElements();
 }
 
-void StatusWindow::setWindowSizeAndPosition(
-    const Vector2i &mainWindowPosition) {
-
-  auto windowLength{common::SIDE_WINDOW_Y_SIZE};
-  auto windowHeight{common::SIDE_WINDOW_Y_SIZE};
-
-  _window.create(VideoMode(windowLength, windowHeight), _windowName,
-                 common::DEFAULT_WINDOW_STYLE);
-
-  Vector2i windowPosition{0, 0};
-  windowPosition.x =
-      mainWindowPosition.x + common::STATUS_WINDOW_X_RELATIVE_POS;
-  windowPosition.y =
-      mainWindowPosition.y + common::STATUS_WINDOW_Y_RELATIVE_POS;
-  _window.setPosition(windowPosition);
-}
-
-void StatusWindow::setUpElements() {
-
-  // DESCRIPTIONS
-  float descriptionWidth = _window.getSize().x;
-  float descriptionHeight = _window.getSize().y * 0.25;
-  _descriptions.align({0.0, 0.0}, {descriptionWidth, descriptionHeight},
-                      common::STATUS_WINDOW_OBJECTS_X_MARGIN,
-                      common::STATUS_WINDOW_OBJECTS_Y_MARGIN,
-                      LayoutType::rowLayout);
-
-  // GAUGE VALUES
-  Vector2f gaugeValuesDesignatedPosition{
-      0, _descriptions.getContainerDimension().y};
-
-  float gaugeValuesWidth = _window.getSize().x;
-  float gaugeValuesHeight = _window.getSize().y - descriptionHeight;
-
-  _gaugeValues.align(
-      gaugeValuesDesignatedPosition, {gaugeValuesWidth, gaugeValuesHeight},
-      common::STATUS_WINDOW_OBJECTS_X_MARGIN,
-      common::STATUS_WINDOW_OBJECTS_Y_MARGIN, LayoutType::rowLayout);
-}
-
-void StatusWindow::setTexturesAndSprites() {
-
-  // BACKGROUND
-  _backgroundTexture.loadFromFile(common::IMG_ABS_PATH +
-                                  "blackBackground1.jpg");
-  _backgroundSprite.setTexture(_backgroundTexture);
-  _backgroundSprite.setScale(
-      common::SIDE_WINDOW_X_SIZE / _backgroundSprite.getLocalBounds().width,
-      common::SIDE_WINDOW_Y_SIZE / _backgroundSprite.getLocalBounds().height);
-}
-
 void StatusWindow::start() {
 
+  LG_INF("STATUS WINDOW - LOOP HAS STARTED");
   Clock clock;
   while (_window.isOpen()) {
     Time dt = clock.restart();
@@ -77,6 +29,7 @@ void StatusWindow::start() {
 void StatusWindow::input() {
 
   if (Keyboard::isKeyPressed(Keyboard::Escape)) {
+    LG_INF("STATUS WINDOW - ESC WAS PRESSED, CLOSING WINDOW, EXITING LOOP");
     _window.close();
   }
 }
@@ -111,4 +64,58 @@ void StatusWindow::updateDisplayedGaugeValues(
     std::string stringValue = std::to_string(gaugeValues.at(i)) + " %";
     _gaugeValues.getElements().at(i).setString(stringValue);
   }
+}
+
+//// HELPERS
+void StatusWindow::setWindowSizeAndPosition(
+    const Vector2i &mainWindowPosition) {
+
+  auto windowLength{common::SIDE_WINDOW_Y_SIZE};
+  auto windowHeight{common::SIDE_WINDOW_Y_SIZE};
+
+  _window.create(VideoMode(windowLength, windowHeight), _windowName,
+                 common::DEFAULT_WINDOW_STYLE);
+
+  Vector2i windowPosition{0, 0};
+  windowPosition.x =
+      mainWindowPosition.x + common::STATUS_WINDOW_X_RELATIVE_POS;
+  windowPosition.y =
+      mainWindowPosition.y + common::STATUS_WINDOW_Y_RELATIVE_POS;
+  _window.setPosition(windowPosition);
+
+  LG_INF("STATUS WINDOW - CREATED");
+}
+
+void StatusWindow::setUpElements() {
+
+  // DESCRIPTIONS
+  float descriptionWidth = _window.getSize().x;
+  float descriptionHeight = _window.getSize().y * 0.25;
+  _descriptions.align({0.0, 0.0}, {descriptionWidth, descriptionHeight},
+                      common::STATUS_WINDOW_OBJECTS_X_MARGIN,
+                      common::STATUS_WINDOW_OBJECTS_Y_MARGIN,
+                      LayoutType::rowLayout);
+
+  // GAUGE VALUES
+  Vector2f gaugeValuesDesignatedPosition{
+      0, _descriptions.getContainerDimension().y};
+
+  float gaugeValuesWidth = _window.getSize().x;
+  float gaugeValuesHeight = _window.getSize().y - descriptionHeight;
+
+  _gaugeValues.align(
+      gaugeValuesDesignatedPosition, {gaugeValuesWidth, gaugeValuesHeight},
+      common::STATUS_WINDOW_OBJECTS_X_MARGIN,
+      common::STATUS_WINDOW_OBJECTS_Y_MARGIN, LayoutType::rowLayout);
+}
+
+void StatusWindow::setTexturesAndSprites() {
+
+  // BACKGROUND
+  _backgroundTexture.loadFromFile(common::IMG_ABS_PATH +
+                                  "blackBackground1.jpg");
+  _backgroundSprite.setTexture(_backgroundTexture);
+  _backgroundSprite.setScale(
+      common::SIDE_WINDOW_X_SIZE / _backgroundSprite.getLocalBounds().width,
+      common::SIDE_WINDOW_Y_SIZE / _backgroundSprite.getLocalBounds().height);
 }

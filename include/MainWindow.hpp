@@ -1,13 +1,15 @@
 #pragma once
 
 #include "../assets/graphics/SpriteObjects/include/Rocket.hpp"
+#include "../common/classes/SimpleLogger.hpp"
 #include <SFML/Graphics.hpp>
 
 using namespace sf;
 
-class MainWindow {
+class MainWindow : public SimpleLogger {
 public:
-  MainWindow();
+  MainWindow(const Vector2i &referencePoint = {0, 0},
+             bool isLogInfoEnable = true, bool isLogErrorEnable = true);
   void start();
   Vector2i getPosition();
 
