@@ -1,6 +1,5 @@
 
 #pragma once
-#include "../PipeInfo.hpp"
 #include <stdio.h>
 #include <string>
 #include <unistd.h>

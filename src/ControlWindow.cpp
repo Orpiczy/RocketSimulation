@@ -1,5 +1,6 @@
 #include "../include/ControlWindow.hpp"
 #include "../common/Common.hpp"
+#include <SFML/Graphics.hpp>
 
 ControlWindow::ControlWindow(const Vector2i &mainWindowPosition,
                              bool isLogInfoEnable, bool isLogErrorEnable)
