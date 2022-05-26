@@ -50,25 +50,23 @@ void SimpleLogger::logString(const std::string &log) const {
 
     // Remove newline from string
     int length = strlen(buffer);
-    if (buffer[length - 1] == '\n')
-      buffer[length - 1] = '\0';
 
     // Open FIFO file
     if ((fileDescriptor = open(comm::VIRTUAL_FILE_FOR_LOGGING, O_WRONLY)) ==
         -1) {
-      fprintf(stderr, "Cannot open FIFO.\n");
+      fprintf(stderr, " >> ERROR  - SIMPLE LOGGER - Cannot open FIFO.\n");
       return;
     }
 
     // Write a message to FIFO
     if (write(fileDescriptor, buffer, strlen(buffer)) != strlen(buffer)) {
-      fprintf(stderr, "Cannot write to FIFO.\n");
+      fprintf(stderr, " >> ERROR  - SIMPLE LOGGER - Cannot write to FIFO.\n");
       return;
     }
 
     // Close FIFO
     if (close(fileDescriptor) == -1) {
-      fprintf(stderr, "Cannot close FIFO.\n");
+      fprintf(stderr, " >> ERROR  - SIMPLE LOGGER - Cannot close FIFO.\n");
       return;
     }
   } else {
