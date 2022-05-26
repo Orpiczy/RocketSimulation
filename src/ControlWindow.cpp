@@ -3,7 +3,8 @@
 #include "../common/CommunicationInfo.hpp"
 #include "../common/MessageTypes.hpp"
 #include <SFML/Graphics.hpp>
-#include <mqueue.h>
+#include <errno.h>
+#include <string.h>
 
 ControlWindow::ControlWindow(const Vector2i &mainWindowPosition,
                              bool isLogInfoEnable, bool isLogErrorEnable)
@@ -12,6 +13,20 @@ ControlWindow::ControlWindow(const Vector2i &mainWindowPosition,
   setTexturesAndSprites();
   setUpElements();
   LG_INF("CONTROL WINDOW - CREATED");
+
+  /* Create Message Queue */
+  if ((comm::thrustersControlQueue =
+           mq_open(comm::THRUSTERS_CONTROL_QUEUE_FILE, O_CREAT | O_RDWR, 0644,
+                   &comm::thrustersControlQueueAttr)) == -1) {
+    printf(" >> ERROR - Control Window - FAILED TO OPEN THE QUEUE %s\n",
+           strerror(errno));
+    return;
+  }
+}
+
+ControlWindow::~ControlWindow() {
+  /* Close Message Queue */
+  mq_close(comm::thrustersControlQueue);
 }
 
 void ControlWindow::start() {
@@ -36,14 +51,16 @@ void ControlWindow::input() {
   }
 
   if (sf::Mouse::isButtonPressed(sf::Mouse::Left)) {
-    LG_INF("CONTROL WINDOW - LMB WAS PRESSED - CHECKING POSITION AND CLICKING "
-           "SWITCH IF NEEDED");
+    // LG_INF("CONTROL WINDOW - LMB WAS PRESSED - CHECKING POSITION AND CLICKING
+    // "
+    //       "SWITCH IF NEEDED");
     auto mousePosition = sf::Mouse::getPosition(
         _window); // Mouse position relative to the window
     auto globalMousePosition = _window.mapPixelToCoords(mousePosition);
     int clickecElementId = _thrusterSwitches.click(globalMousePosition);
-    LG_INF("clickecElementId = ", clickecElementId);
-    // update - tak aby dwa thrustery nigdy nie byly wlaczone razem
+    // LG_INF("clickecElementId = ", clickecElementId);
+
+    // update - tak aby dwa side thrustery nigdy nie byly wlaczone razem
     switch (clickecElementId) {
     case 0:
 
@@ -55,12 +72,16 @@ void ControlWindow::input() {
     case 2:
 
       if (_thrusterSwitches.getElements().at(2).getState()) {
-        _thrusterSwitches.getElements().at(0).click();
+        _thrusterSwitches.getElements().at(0).setOff();
       }
       break;
 
     default:
       break;
+    }
+
+    if (clickecElementId != -1) {
+      publishThrustersControl();
     }
   }
 }
@@ -85,19 +106,14 @@ void ControlWindow::draw() {
 //// COMMUNICATION
 void ControlWindow::publishThrustersControl() {
 
-  /* Create Message Queue */
-  if ((comm::thrustersControlQueue =
-           mq_open(comm::THRUSTERS_CONTROL_QUEUE_FILE, O_CREAT | O_RDWR, 0644,
-                   &comm::thrustersControlQueueAttr)) == -1) {
-    LG_ERR("CONTROL WINDOW - Creation of the mqueues failed - error - ");
-    return;
-  }
-
   /*SENDIND MSG*/
 
-  // MainThrusterState mainThruster =
-  //     msg::ThrustersStateMsg msg{.mainThrusterState = } mq_send(
-  //         comm::thrustersControlQueue, (const char *)&i, sizeof(int), 0);
+  msg::ThrustersStateMsg thrusterStateMsg;
+  std::tie(thrusterStateMsg.mainThrusterState,
+           thrusterStateMsg.sideThrusterState) = getThrustersState();
+
+  mq_send(comm::thrustersControlQueue, (const char *)&thrusterStateMsg,
+          sizeof(msg::ThrustersStateMsg), 0);
 
   /* Close Message Queue */
   mq_close(comm::thrustersControlQueue);

@@ -15,6 +15,6 @@ static mqd_t thrustersControlQueue;
 static struct mq_attr thrustersControlQueueAttr {
   .mq_maxmsg = 10, .mq_msgsize = sizeof(msg::ThrustersStateMsg)
 };
-static const char *THRUSTERS_CONTROL_QUEUE_FILE{"thrusters_control_queue"};
+static const char *THRUSTERS_CONTROL_QUEUE_FILE{"/thrusters_control_queue"};
 
 } // namespace comm

@@ -12,6 +12,8 @@ class ControlWindow : public IWindow, public SimpleLogger {
 public:
   ControlWindow(const Vector2i &mainWindowPosition = {0, 0},
                 bool isLogInfoEnable = true, bool isLogErrorEnable = true);
+
+  ~ControlWindow();
   void start();
 
 private:

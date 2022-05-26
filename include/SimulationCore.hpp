@@ -4,14 +4,18 @@
 
 class SimulationCore : public SimpleLogger {
 public:
-  SimulationCore(bool isLogInfoEnable = true, bool isLogErrorEnable = true)
-      : SimpleLogger(isLogInfoEnable, isLogErrorEnable) {}
+  SimulationCore(bool isLogInfoEnable = true, bool isLogErrorEnable = true);
+
+  ~SimulationCore();
+
   void run();
 
 private:
   common::RocketParams rocketParams;
   common::DestinationParams destinationParams;
 
+  // CORE
+  void startSimulation();
   // COMMUNICATION
-  void updateThrusterState();
+  void updateThrustersInformation();
 };

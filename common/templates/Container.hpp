@@ -38,9 +38,9 @@ public:
                           float marginX, float marginY,
                           bool keepProportion) = 0;
 
-  bool click(const sf::Vector2f &globalMousePosition) {
+  int click(const sf::Vector2f &globalMousePosition) {
     if (_timer.getElapsedTime() < _keyPressDelay) {
-      return false;
+      return -1;
     }
 
     int elementId {0};
