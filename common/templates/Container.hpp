@@ -43,23 +43,25 @@ public:
       return false;
     }
 
+    int elementId {0};
     for (auto &el : _elementsContainer) {
       if (static_cast<sf::Sprite>(el).getGlobalBounds().contains(
               globalMousePosition)) {
         el.click();
         _timer.restart();
-        return true;
+        return elementId;
       }
+      elementId ++;
     }
 
-    return false;
+    return -1;
   }
 
   std::array<T, nrOfElements> &getElements() { return _elementsContainer; }
 
 protected:
   std::array<T, nrOfElements> _elementsContainer;
-  sf::Time _keyPressDelay{sf::milliseconds(100)};
+  sf::Time _keyPressDelay{sf::milliseconds(300)};
   sf::Clock _timer;
   sf::Vector2f _containerDimensions{0, 0};
 };

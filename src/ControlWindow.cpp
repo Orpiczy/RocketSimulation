@@ -1,6 +1,9 @@
 #include "../include/ControlWindow.hpp"
 #include "../common/Common.hpp"
+#include "../common/CommunicationInfo.hpp"
+#include "../common/MessageTypes.hpp"
 #include <SFML/Graphics.hpp>
+#include <mqueue.h>
 
 ControlWindow::ControlWindow(const Vector2i &mainWindowPosition,
                              bool isLogInfoEnable, bool isLogErrorEnable)
@@ -38,7 +41,27 @@ void ControlWindow::input() {
     auto mousePosition = sf::Mouse::getPosition(
         _window); // Mouse position relative to the window
     auto globalMousePosition = _window.mapPixelToCoords(mousePosition);
-    _thrusterSwitches.click(globalMousePosition);
+    int clickecElementId = _thrusterSwitches.click(globalMousePosition);
+    LG_INF("clickecElementId = ", clickecElementId);
+    // update - tak aby dwa thrustery nigdy nie byly wlaczone razem
+    switch (clickecElementId) {
+    case 0:
+
+      if (_thrusterSwitches.getElements().at(0).getState()) {
+        _thrusterSwitches.getElements().at(2).setOff();
+      }
+      break;
+
+    case 2:
+
+      if (_thrusterSwitches.getElements().at(2).getState()) {
+        _thrusterSwitches.getElements().at(0).click();
+      }
+      break;
+
+    default:
+      break;
+    }
   }
 }
 
@@ -59,6 +82,55 @@ void ControlWindow::draw() {
   _window.display();
 }
 
+//// COMMUNICATION
+void ControlWindow::publishThrustersControl() {
+
+  /* Create Message Queue */
+  if ((comm::thrustersControlQueue =
+           mq_open(comm::THRUSTERS_CONTROL_QUEUE_FILE, O_CREAT | O_RDWR, 0644,
+                   &comm::thrustersControlQueueAttr)) == -1) {
+    LG_ERR("CONTROL WINDOW - Creation of the mqueues failed - error - ");
+    return;
+  }
+
+  /*SENDIND MSG*/
+
+  // MainThrusterState mainThruster =
+  //     msg::ThrustersStateMsg msg{.mainThrusterState = } mq_send(
+  //         comm::thrustersControlQueue, (const char *)&i, sizeof(int), 0);
+
+  /* Close Message Queue */
+  mq_close(comm::thrustersControlQueue);
+}
+////GETERS
+std::tuple<common::MainThrusterState, common::SideThrusterState>
+ControlWindow::getThrustersState() const {
+
+  const std::array<bool, _nrOfElements> switchesState =
+      _thrusterSwitches.getSwitchesState();
+
+  return getThrustersStateFromSwitchesState(switchesState);
+}
+
+std::tuple<common::MainThrusterState, common::SideThrusterState>
+ControlWindow::getThrustersStateFromSwitchesState(
+    const std::array<bool, _nrOfElements> switchesState) const {
+  // MAIN
+  auto mainThrusterState = switchesState.at(1)
+                               ? common::MainThrusterState::TURN_ON
+                               : common::MainThrusterState::TURN_OFF;
+  // LEFT
+  auto leftThrusterState = switchesState.at(0)
+                               ? common::SideThrusterState::LEFT_ON
+                               : common::SideThrusterState::TURN_OFF;
+
+  // RIGHT
+  auto sideThrusterState = switchesState.at(2)
+                               ? common::SideThrusterState::RIGHT_ON
+                               : leftThrusterState;
+
+  return {mainThrusterState, sideThrusterState};
+}
 //// HELPERS
 
 void ControlWindow::setWindowSizeAndPosition(

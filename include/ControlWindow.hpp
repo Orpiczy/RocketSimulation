@@ -1,5 +1,6 @@
 #pragma once
 #include "../assets/graphics/SpriteObjects/include/Switch.hpp"
+#include "../common/CommonTypes.hpp"
 #include "../common/classes/SimpleLogger.hpp"
 #include "../common/interfaces/IWindow.hpp"
 #include "../common/templates/SwitchContainer.hpp"
@@ -20,16 +21,26 @@ private:
   sf::Font font;
 
   const char *_windowName = "Control Window";
-
-  // spriteObjects::Switch _mainThrusterSwitch;
-  // spriteObjects::Switch _leftThrusterSwitch;
-  // spriteObjects::Switch _rightThrusterSwitch;
-  TextContainer<3> _descriptions{};
-  SwitchContainer<3> _thrusterSwitches{};
+  const static uint8_t _nrOfElements{3};
+  const std::map<uint8_t, std::string> _descriptionMap{
+      {0, "LEFT"}, {1, "MAIN"}, {2, "RIGHT"}};
+  TextContainer<_nrOfElements> _descriptions{};
+  SwitchContainer<_nrOfElements> _thrusterSwitches{};
 
   void input();
   void update(float dtAsSeconds);
   void draw();
+
+  // COMMUNICATION
+  void publishThrustersControl();
+
+  // GETERS
+  std::tuple<common::MainThrusterState, common::SideThrusterState>
+  getThrustersState() const;
+
+  std::tuple<common::MainThrusterState, common::SideThrusterState>
+  getThrustersStateFromSwitchesState(
+      const std::array<bool, _nrOfElements> switchesState) const;
 
   // HELPERS
   void setWindowSizeAndPosition(const Vector2i &mainWindowPosition);

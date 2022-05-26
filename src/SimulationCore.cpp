@@ -70,6 +70,8 @@ spawnPoint:
   }
   }
 
-  waitpid(pid, NULL, 0);
-  // }
+  waitpid(pid, NULL, 0); // waits for logger
 }
+
+// COMMUNICATION
+void SimulationCore::updateThrusterState() {}

@@ -1,0 +1,3 @@
+1. Dodaj priorytety wątkom i procesom
+2. Dodaj oblsługe printowania ERNO I bledow w logerze
+3. Przemysl jeszcze raz sidethrustery i jak to tam rozwiazac
