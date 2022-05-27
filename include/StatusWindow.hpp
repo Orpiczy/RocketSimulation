@@ -11,6 +11,8 @@ class StatusWindow : public IWindow, public SimpleLogger {
 public:
   StatusWindow(const Vector2i &mainWindowPosition = {0, 0},
                bool isLogInfoEnable = true, bool isLogErrorEnable = true);
+
+  ~StatusWindow();
   void start();
 
 private:
@@ -34,4 +36,8 @@ private:
   void setUpElements();
   void updateDescription();
   void updateDisplayedGaugeValues(const std::vector<int> &values);
+
+  // COMMUNICATION SETUP
+  void openQueues();
+  void closeQueues();
 };

@@ -112,11 +112,13 @@ void ControlWindow::publishThrustersControl() {
   std::tie(thrusterStateMsg.mainThrusterState,
            thrusterStateMsg.sideThrusterState) = getThrustersState();
 
-  mq_send(comm::thrustersControlQueue, (const char *)&thrusterStateMsg,
-          sizeof(msg::ThrustersStateMsg), 0);
+  if (mq_send(comm::thrustersControlQueue, (const char *)&thrusterStateMsg,
+              sizeof(msg::ThrustersStateMsg), 0) == -1) {
+    LG_ERR("Control Window - FAILED TO SEND CONTROL - " +
+           std::string(strerror(errno)));
+  }
 
-  /* Close Message Queue */
-  mq_close(comm::thrustersControlQueue);
+  LG_INF("CONTROL WINDOW - SENT THRUSTER CONTROL UPDATE");
 }
 ////GETERS
 std::tuple<common::MainThrusterState, common::SideThrusterState>

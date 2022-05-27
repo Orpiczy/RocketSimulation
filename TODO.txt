@@ -2,3 +2,4 @@
 2. Dodaj oblsługe printowania ERNO I bledow w logerze
 3. Przemysl jeszcze raz sidethrustery i jak to tam rozwiazac
 4. Zmodyfikuj priorytety wiadomosci w kolejkach
+5. Dodaj wage msg

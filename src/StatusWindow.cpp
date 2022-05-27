@@ -1,6 +1,12 @@
 #include "../include/StatusWindow.hpp"
 #include "../common/Common.hpp"
 
+// comms
+#include "../common/CommunicationInfo.hpp"
+#include "../common/MessageTypes.hpp"
+#include <mqueue.h>
+#include <string.h>
+
 StatusWindow::StatusWindow(const Vector2i &mainWindowPosition,
                            bool isLogInfoEnable, bool isLogErrorEnable)
     : SimpleLogger(isLogInfoEnable, isLogErrorEnable) {
@@ -9,7 +15,10 @@ StatusWindow::StatusWindow(const Vector2i &mainWindowPosition,
   updateDisplayedGaugeValues({2, 23, 67, 53});
   updateDescription();
   setUpElements();
+  openQueues();
 }
+
+StatusWindow::~StatusWindow() { closeQueues(); }
 
 void StatusWindow::start() {
 
@@ -119,3 +128,16 @@ void StatusWindow::setTexturesAndSprites() {
       common::SIDE_WINDOW_X_SIZE / _backgroundSprite.getLocalBounds().width,
       common::SIDE_WINDOW_Y_SIZE / _backgroundSprite.getLocalBounds().height);
 }
+
+// COMMUNICATION SETUP
+void StatusWindow::openQueues() {
+  if ((comm::rocketStatusQueue =
+           mq_open(comm::ROCKET_STATUS_QUEUE_FILE, O_CREAT | O_RDWR, 0644,
+                   &comm::rocketStatusQueueAttr)) == -1) {
+    printf(
+        " >> ERROR - Simulation Core - FAILED TO OPEN ROCKET STATUS QUEUE %s\n",
+        strerror(errno));
+    return;
+  }
+}
+void StatusWindow::closeQueues() { mq_close(comm::rocketStatusQueue); }

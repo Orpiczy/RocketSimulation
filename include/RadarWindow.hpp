@@ -9,6 +9,7 @@ class RadarWindow : public IWindow, public SimpleLogger {
 public:
   RadarWindow(const Vector2i &mainWindowPosition = {0, 0},
               bool isLogInfoEnable = true, bool isLogErrorEnable = true);
+  ~RadarWindow();
 
   void start();
 
@@ -35,6 +36,10 @@ private:
   void input();
   void update(float dtAsSeconds);
   void draw();
+
+  // COMMUNICATION SETUP
+  void openQueues();
+  void closeQueues();
 
   //// HELPERS
   void setWindowSizeAndPosition(const Vector2i &mainWindowPosition);

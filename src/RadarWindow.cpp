@@ -1,14 +1,23 @@
 #include "../include/RadarWindow.hpp"
 #include "../common/Common.hpp"
 
+// comms
+#include "../common/CommunicationInfo.hpp"
+#include "../common/MessageTypes.hpp"
+#include <mqueue.h>
+#include <string.h>
+
 RadarWindow::RadarWindow(const Vector2i &mainWindowPosition,
                          bool isLogInfoEnable, bool isLogErrorEnable)
     : SimpleLogger(isLogInfoEnable, isLogErrorEnable) {
   setWindowSizeAndPosition(mainWindowPosition);
   setMaxRadarSpriteDistane();
   setTexturesAndSprites();
+  openQueues();
   LG_INF("RADAR WINDOW - CREATED");
 }
+
+RadarWindow::~RadarWindow() { closeQueues(); }
 
 void RadarWindow::start() {
   LG_INF("RADAR WINDOW - LOOP HAS STARTED");
@@ -92,3 +101,15 @@ void RadarWindow::setTexturesAndSprites() {
 
   _moonSprite.setPosition(_window.getSize().x / 2, moonIconRealYSize / 2);
 }
+
+// COMMUNICATION SETUP
+void RadarWindow::openQueues() {
+  if ((comm::objectsPositionQueue =
+           mq_open(comm::OBJECTS_POSITION_QUEUE_FILE, O_CREAT | O_RDWR, 0644,
+                   &comm::objectsPositionQueueAttr)) == -1) {
+    printf(" >> ERROR - Simulation Core - FAILED TO OPEN POSITION QUEUE %s\n",
+           strerror(errno));
+    return;
+  }
+}
+void RadarWindow::closeQueues() { mq_close(comm::objectsPositionQueue); }
