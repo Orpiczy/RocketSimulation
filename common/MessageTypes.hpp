@@ -22,4 +22,13 @@ struct RocketStatusMsg {
   float angle{0};
 };
 
+struct RocketVisualizationContainerMsg {
+  sf::Vector2f velocity{0, 0};
+  float angle{0};
+  MainThrusterState mainThrusterState{MainThrusterState::TURN_OFF};
+  SideThrusterState sideThrusterState{SideThrusterState::TURN_OFF};
+  sf::Vector2f destinationPosition{0, 0};
+  sf::Vector2f rockePosition{0, 0};
+};
+
 } // namespace msg

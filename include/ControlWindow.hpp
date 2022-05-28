@@ -30,8 +30,12 @@ private:
   SwitchContainer<_nrOfElements> _thrusterSwitches{};
 
   void input();
-  void update(float dtAsSeconds);
+  void update();
   void draw();
+
+  // COMMUNICATION SETUP
+  void openQueues();
+  void closeQueues();
 
   // COMMUNICATION
   void publishThrustersControl();

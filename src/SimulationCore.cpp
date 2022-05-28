@@ -11,7 +11,6 @@
 
 // comms
 #include "../common/CommunicationInfo.hpp"
-#include <mqueue.h>
 
 SimulationCore::SimulationCore(bool isLogInfoEnable, bool isLogErrorEnable)
     : SimpleLogger(isLogInfoEnable, isLogErrorEnable) {
@@ -86,16 +85,103 @@ spawnPoint:
   waitpid(pid, NULL, 0); // kazdy czeka na siebie nawzajem
 }
 
-// CORE
+//// CORE
+
 void SimulationCore::startSimulation() {
   LG_INF("SIMULATION CORE - STARTING SIMULATION");
   while (true) {
-    getCurrentThrustersControl();
+    // getCurrentThrustersControl();
+    // sendVisualizationData();
+    sendRocketStatus();
   }
   LG_INF("SIMULATION CORE - ENDING SIMULATION");
 }
 
-// COMMUNICATION
+//// COMMUNICATION SETUP
+void SimulationCore::openQueues() {
+
+  // ROCKET VISUALIZATION
+  if ((comm::rocketVisualizationQueue =
+           mq_open(comm::ROCKET_VISUALIZATION_QUEUE_FILE, O_CREAT | O_RDWR,
+                   0644, &comm::rocketVisualizationQueueAttr)) == -1) {
+    printf(" >> ERROR - SIMULATION CORE - FAILED TO OPEN ROCKET VISUALIZATION "
+           "QUEUE %s\n",
+           strerror(errno));
+    return;
+  }
+
+  // CONTROL
+  if ((comm::thrustersControlQueue =
+           mq_open(comm::THRUSTERS_CONTROL_QUEUE_FILE, O_CREAT | O_RDWR, 0644,
+                   &comm::thrustersControlQueueAttr)) == -1) {
+    printf(" >> ERROR - SIMULATION CORE - FAILED TO OPEN CONTROL QUEUE %s\n",
+           strerror(errno));
+    return;
+  }
+
+  // POSITION
+  if ((comm::objectsPositionQueue =
+           mq_open(comm::OBJECTS_POSITION_QUEUE_FILE, O_CREAT | O_RDWR, 0644,
+                   &comm::objectsPositionQueueAttr)) == -1) {
+    printf(" >> ERROR - SIMULATION CORE - FAILED TO OPEN POSITION QUEUE %s\n",
+           strerror(errno));
+    return;
+  }
+
+  // ROCKET STATUS
+  if ((comm::rocketStatusQueue =
+           mq_open(comm::ROCKET_STATUS_QUEUE_FILE, O_CREAT | O_RDWR, 0644,
+                   &comm::rocketStatusQueueAttr)) == -1) {
+    printf(
+        " >> ERROR - SIMULATION CORE - FAILED TO OPEN ROCKET STATUS QUEUE %s\n",
+        strerror(errno));
+    return;
+  }
+}
+
+void SimulationCore::closeQueues() {
+  if (mq_close(comm::rocketVisualizationQueue) == -1) {
+    printf(" >> ERROR - SIMULATION CORE - FAILED TO CLOSE ROCKET VISUALIZATION "
+           "QUEUE %s\n",
+           strerror(errno));
+  }
+  if (mq_close(comm::thrustersControlQueue) == -1) {
+    printf(" >> ERROR - SIMULATION CORE - FAILED TO CLOSE CONTROL QUEUE %s\n",
+           strerror(errno));
+  }
+  if (mq_close(comm::objectsPositionQueue) == -1) {
+    printf(" >> ERROR - SIMULATION CORE - FAILED TO CLOSE POSITION QUEUE %s\n",
+           strerror(errno));
+  }
+  if (mq_close(comm::rocketStatusQueue) == -1) {
+    printf(" >> ERROR - SIMULATION CORE - FAILED TO CLOSE ROCKET STATUS QUEUE "
+           "%s\n",
+           strerror(errno));
+  }
+}
+
+//// COMMUNICATION
+
+void SimulationCore::sendVisualizationData() {
+
+  msg::RocketVisualizationContainerMsg visualizationContainerMsg{
+      .velocity = _rocketParams.velocity,
+      .angle = _rocketParams.angle,
+      .mainThrusterState = _rocketParams.mainThrusterState,
+      .sideThrusterState = _rocketParams.sideThrusterState,
+      .destinationPosition = _destinationParams.position,
+      .rockePosition = _rocketParams.position};
+
+  if (mq_send(comm::rocketVisualizationQueue,
+              (char *)&visualizationContainerMsg,
+              sizeof(msg::RocketVisualizationContainerMsg), 0) == -1) {
+    LG_ERR("SIMULATION CORE - FAILED TO SEND VISUALIZATION DATA - " +
+           std::string(strerror(errno)));
+  } else {
+    LG_INF("SIMULATION CORE - SENT UPDATE ON VISUALIZATION DATA");
+  }
+}
+
 void SimulationCore::getCurrentThrustersControl() {
   msg::ThrustersStateMsg thrusterStateMsg;
 
@@ -103,11 +189,10 @@ void SimulationCore::getCurrentThrustersControl() {
                  sizeof(msg::ThrustersStateMsg), NULL) == -1) {
     LG_ERR("SIMULATION CORE - FAILED TO RECEIVE CONTROL - " +
            std::string(strerror(errno)));
+  } else {
+    LG_INF("SIMULATION CORE - RECEIVED UPDATE OF THRUSTERS CONTROL");
+    LogReceivedControl(thrusterStateMsg);
   }
-
-  LG_INF("SIMULATION CORE - RECEIVED UPDATE OF THRUSTERS CONTROL");
-
-  LogReceicedControl(thrusterStateMsg);
 }
 
 void SimulationCore::sendObjectsPosition() {
@@ -126,6 +211,7 @@ void SimulationCore::sendObjectsPosition() {
 }
 
 void SimulationCore::sendRocketStatus() {
+  _rocketParams.oxygen = _rocketParams.oxygen + 0.01;
   msg::RocketStatusMsg rocketStatusMsg{.oxygen = _rocketParams.oxygen,
                                        .fuel = _rocketParams.fuel,
                                        .velocity = _rocketParams.velocity,
@@ -140,45 +226,8 @@ void SimulationCore::sendRocketStatus() {
   LG_INF("SIMULATION CORE - SENT UPDATE ON ROCKET STATUS");
 }
 
-// COMMUNICATION SETUP
-void SimulationCore::openQueues() {
-
-  // CONTROL
-  if ((comm::thrustersControlQueue =
-           mq_open(comm::THRUSTERS_CONTROL_QUEUE_FILE, O_CREAT | O_RDWR, 0644,
-                   &comm::thrustersControlQueueAttr)) == -1) {
-    printf(" >> ERROR - Simulation Core - FAILED TO OPEN CONTROL QUEUE %s\n",
-           strerror(errno));
-    return;
-  }
-
-  // POSITION
-  if ((comm::objectsPositionQueue =
-           mq_open(comm::OBJECTS_POSITION_QUEUE_FILE, O_CREAT | O_RDWR, 0644,
-                   &comm::objectsPositionQueueAttr)) == -1) {
-    printf(" >> ERROR - Simulation Core - FAILED TO OPEN POSITION QUEUE %s\n",
-           strerror(errno));
-    return;
-  }
-
-  // ROCKET STATUS
-  if ((comm::rocketStatusQueue =
-           mq_open(comm::ROCKET_STATUS_QUEUE_FILE, O_CREAT | O_RDWR, 0644,
-                   &comm::rocketStatusQueueAttr)) == -1) {
-    printf(
-        " >> ERROR - Simulation Core - FAILED TO OPEN ROCKET STATUS QUEUE %s\n",
-        strerror(errno));
-    return;
-  }
-}
-void SimulationCore::closeQueues() {
-  mq_close(comm::thrustersControlQueue);
-  mq_close(comm::objectsPositionQueue);
-  mq_close(comm::rocketStatusQueue);
-}
-
-////HELPERS
-void SimulationCore::LogReceicedControl(
+//// LOG HELPERS
+void SimulationCore::LogReceivedControl(
     const msg::ThrustersStateMsg &thrusterStateMsg) {
   switch (thrusterStateMsg.mainThrusterState) {
   case common::MainThrusterState::TURN_ON:
@@ -211,4 +260,12 @@ void SimulationCore::LogReceicedControl(
     LG_INF("SIMULATION CORE - DID NOT RECEIVE CONTROL - SIDE ENGINES");
     break;
   }
+}
+
+////DEBUG
+void SimulationCore::printQueueInfo(const mqd_t &queueFile) {
+  struct mq_attr attr;
+  mq_getattr(queueFile, &attr);
+  printf("Maximum # of messages on queue:   %ld\n", attr.mq_maxmsg);
+  printf("Maximum message size:             %ld\n", attr.mq_msgsize);
 }

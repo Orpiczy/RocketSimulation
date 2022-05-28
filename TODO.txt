@@ -3,3 +3,5 @@
 3. Przemysl jeszcze raz sidethrustery i jak to tam rozwiazac
 4. Zmodyfikuj priorytety wiadomosci w kolejkach
 5. Dodaj wage msg
+6. Dopytaj o co chodzi z nazwa /rocket_visualization_queue, czemu juz jest i kto na niej publikuje
+7. Czemu aby zmienic atrybuty kolejki to musze resetowac komputer - sprawdz poprawnosc zamykania kolejek

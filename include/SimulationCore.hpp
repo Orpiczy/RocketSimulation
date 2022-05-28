@@ -4,6 +4,7 @@
 
 // comms
 #include "../common/MessageTypes.hpp"
+#include <mqueue.h>
 
 class SimulationCore : public SimpleLogger {
 public:
@@ -21,6 +22,7 @@ private:
   void startSimulation();
 
   // COMMUNICATION
+  void sendVisualizationData();
   void getCurrentThrustersControl();
   void sendObjectsPosition();
   void sendRocketStatus();
@@ -29,6 +31,9 @@ private:
   void openQueues();
   void closeQueues();
 
-  ////HELPERS
-  void LogReceicedControl(const msg::ThrustersStateMsg &thrusterStateMsg);
+  //// LOG HELPERS
+  void LogReceivedControl(const msg::ThrustersStateMsg &thrusterStateMsg);
+
+  //// DEBUG
+  void printQueueInfo(const mqd_t &queueFile);
 };

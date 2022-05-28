@@ -34,7 +34,7 @@ private:
   const char *_windowName = "Radar Window";
 
   void input();
-  void update(float dtAsSeconds);
+  void update();
   void draw();
 
   // COMMUNICATION SETUP

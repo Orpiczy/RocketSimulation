@@ -7,6 +7,6 @@ public:
 
 private:
   virtual void input() = 0;
-  virtual void update(float dtAsSeconds) = 0;
+  virtual void update() = 0;
   virtual void draw() = 0;
 };

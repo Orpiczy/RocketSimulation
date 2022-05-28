@@ -26,7 +26,7 @@ void RadarWindow::start() {
     Time dt = clock.restart();
     float dtAsSeconds = dt.asSeconds();
     input();
-    update(dtAsSeconds);
+    update();
     draw();
     sf::Event event;
     _window.pollEvent(event);
@@ -41,7 +41,7 @@ void RadarWindow::input() {
   }
 }
 
-void RadarWindow::update(float dtAsSeconds) {}
+void RadarWindow::update() {}
 
 void RadarWindow::draw() {
   _window.clear(Color::White);

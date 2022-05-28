@@ -12,31 +12,17 @@ ControlWindow::ControlWindow(const Vector2i &mainWindowPosition,
   setWindowSizeAndPosition(mainWindowPosition);
   setTexturesAndSprites();
   setUpElements();
+  openQueues();
   LG_INF("CONTROL WINDOW - CREATED");
-
-  /* Create Message Queue */
-  if ((comm::thrustersControlQueue =
-           mq_open(comm::THRUSTERS_CONTROL_QUEUE_FILE, O_CREAT | O_RDWR, 0644,
-                   &comm::thrustersControlQueueAttr)) == -1) {
-    printf(" >> ERROR - Control Window - FAILED TO OPEN THE QUEUE %s\n",
-           strerror(errno));
-    return;
-  }
 }
 
-ControlWindow::~ControlWindow() {
-  /* Close Message Queue */
-  mq_close(comm::thrustersControlQueue);
-}
+ControlWindow::~ControlWindow() { closeQueues(); }
 
 void ControlWindow::start() {
   LG_INF("CONTROL WINDOW - LOOP HAS STARTED");
-  Clock clock;
   while (_window.isOpen()) {
-    Time dt = clock.restart();
-    float dtAsSeconds = dt.asSeconds();
     input();
-    update(dtAsSeconds);
+    update();
     draw();
     sf::Event event;
     _window.pollEvent(event);
@@ -86,7 +72,7 @@ void ControlWindow::input() {
   }
 }
 
-void ControlWindow::update(float dtAsSeconds) {}
+void ControlWindow::update() {}
 
 void ControlWindow::draw() {
   _window.clear(Color::White);
@@ -103,10 +89,20 @@ void ControlWindow::draw() {
   _window.display();
 }
 
+//// COMMUNICATION SETUP
+void ControlWindow::openQueues() {
+  if ((comm::thrustersControlQueue =
+           mq_open(comm::THRUSTERS_CONTROL_QUEUE_FILE, O_CREAT | O_RDWR, 0644,
+                   &comm::thrustersControlQueueAttr)) == -1) {
+    printf(" >> ERROR - Control Window - FAILED TO OPEN THE QUEUE %s\n",
+           strerror(errno));
+    return;
+  }
+}
+void ControlWindow::closeQueues() { mq_close(comm::thrustersControlQueue); }
+
 //// COMMUNICATION
 void ControlWindow::publishThrustersControl() {
-
-  /*SENDIND MSG*/
 
   msg::ThrustersStateMsg thrusterStateMsg;
   std::tie(thrusterStateMsg.mainThrusterState,
@@ -116,9 +112,9 @@ void ControlWindow::publishThrustersControl() {
               sizeof(msg::ThrustersStateMsg), 0) == -1) {
     LG_ERR("Control Window - FAILED TO SEND CONTROL - " +
            std::string(strerror(errno)));
+  } else {
+    LG_INF("CONTROL WINDOW - SENT THRUSTER CONTROL UPDATE");
   }
-
-  LG_INF("CONTROL WINDOW - SENT THRUSTER CONTROL UPDATE");
 }
 ////GETERS
 std::tuple<common::MainThrusterState, common::SideThrusterState>

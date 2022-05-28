@@ -1,45 +1,42 @@
 #include "../include/MainWindow.hpp"
 #include "../common/Common.hpp"
-// #include <chrono>
-// #include <thread>
+
+// comms
+#include "../common/CommunicationInfo.hpp"
+#include <errno.h>
+#include <mqueue.h>
+#include <string.h>
 
 MainWindow::MainWindow(const Vector2i &referencePoint, bool isLogInfoEnable,
                        bool isLogErrorEnable)
     : SimpleLogger(isLogInfoEnable, isLogErrorEnable) {
-
-  _window.create(
-      VideoMode(common::MAIN_WINDOW_X_SIZE, common::MAIN_WINDOW_Y_SIZE),
-      "Simulation Main Window", common::DEFAULT_WINDOW_STYLE);
-
-  _backgroundTexture.loadFromFile(common::IMG_ABS_PATH + "background3.jpg");
-
-  _backgroundSprite.setTexture(_backgroundTexture);
-  _backgroundSprite.setScale(
-      common::MAIN_WINDOW_X_SIZE / _backgroundSprite.getLocalBounds().width,
-      common::MAIN_WINDOW_Y_SIZE / _backgroundSprite.getLocalBounds().height);
-
-  _window.setPosition(referencePoint);
-
+  setWindowSizeAndPosition(referencePoint);
+  setTexturesAndSprites();
+  setUpElements();
+  openQueues();
   LG_INF("MAIN WINDOW - CREATED");
 }
 
+MainWindow::~MainWindow() { closeQueues(); }
+
 Vector2i MainWindow::getPosition() { return _window.getPosition(); }
-void MainWindow::MainWindow::start() {
+
+void MainWindow::start() {
 
   LG_INF("MAIN WINDOW - LOOP HAS STARTED");
-  Clock clock;
+
   while (_window.isOpen()) {
-    Time dt = clock.restart();
-    float dtAsSeconds = dt.asSeconds();
+
     input();
-    update(dtAsSeconds);
+    update();
     draw();
+
     sf::Event event;
     _window.pollEvent(event);
   }
 }
 
-void MainWindow::MainWindow::input() {
+void MainWindow::input() {
 
   // if (sf::Mouse::isButtonPressed(sf::Mouse::Left))
   // {
@@ -66,11 +63,84 @@ void MainWindow::MainWindow::input() {
   }
 }
 
-void MainWindow::MainWindow::update(float dtAsSeconds) { _rocket.setAngle(0); }
+void MainWindow::update() {
+  // auto newData = getVisualizationData();
+  // updateElementsState(newData);
+}
 
-void MainWindow::MainWindow::draw() {
+void MainWindow::draw() {
   _window.clear(Color::White);
   _window.draw(_backgroundSprite);
   _window.draw(_rocket.getSprite());
   _window.display();
+}
+
+//// COMMUNICATION SETUP
+
+void MainWindow::openQueues() {
+  if ((comm::rocketVisualizationQueue =
+           mq_open(comm::ROCKET_VISUALIZATION_QUEUE_FILE, O_CREAT | O_RDWR,
+                   0644, &comm::rocketVisualizationQueueAttr)) == -1) {
+    printf(" >> ERROR - MAIN WINDOW - FAILED TO OPEN ROCKET VISUALIZATION "
+           "QUEUE %s\n",
+           strerror(errno));
+    return;
+  }
+}
+void MainWindow::closeQueues() { mq_close(comm::rocketVisualizationQueue); }
+
+//// COMMUNICATION
+
+msg::RocketVisualizationContainerMsg MainWindow::getVisualizationData() {
+
+  msg::RocketVisualizationContainerMsg visualizationContainerMsg;
+  if (mq_receive(comm::rocketVisualizationQueue,
+                 (char *)&visualizationContainerMsg,
+                 sizeof(msg::RocketVisualizationContainerMsg), NULL) == -1) {
+    LG_ERR("MAIN WINDOW - FAILED TO RECEIVE VISUALIZATION DATA - " +
+           std::string(strerror(errno)));
+  } else {
+    LG_INF("MAIN WINDOW - RECEIVED UPDATE OF VISUALIZATION DATA");
+  }
+  return visualizationContainerMsg;
+}
+
+//// DATA MANAGMENT
+
+void MainWindow::updateElementsState(
+    const msg::RocketVisualizationContainerMsg &visualizationContainerMsg) {
+  updateRocketState(visualizationContainerMsg);
+}
+
+void MainWindow::updateRocketState(
+    const msg::RocketVisualizationContainerMsg &visualizationContainerMsg) {
+  auto currenRockettAngle = visualizationContainerMsg.angle;
+  LG_INF("MAIN WINDOW - RECEIVED ROCKET ANGLE", currenRockettAngle);
+  _rocket.setAngle(currenRockettAngle);
+}
+
+//// SETUP HELPERS
+void MainWindow::setWindowSizeAndPosition(const Vector2i &referencePoint) {
+  _window.create(
+      VideoMode(common::MAIN_WINDOW_X_SIZE, common::MAIN_WINDOW_Y_SIZE),
+      "Simulation Main Window", common::DEFAULT_WINDOW_STYLE);
+  _window.setPosition(referencePoint);
+}
+
+void MainWindow::setTexturesAndSprites() {
+
+  // BACKGROUND
+
+  _backgroundTexture.loadFromFile(common::IMG_ABS_PATH + "background3.jpg");
+
+  _backgroundSprite.setTexture(_backgroundTexture);
+  _backgroundSprite.setScale(
+      common::MAIN_WINDOW_X_SIZE / _backgroundSprite.getLocalBounds().width,
+      common::MAIN_WINDOW_Y_SIZE / _backgroundSprite.getLocalBounds().height);
+}
+
+void MainWindow::setUpElements() {
+  /*
+    NOTHING YET
+  */
 }

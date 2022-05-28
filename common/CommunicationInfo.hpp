@@ -31,4 +31,13 @@ static struct mq_attr rocketStatusQueueAttr {
 };
 static const char *ROCKET_STATUS_QUEUE_FILE{"/rocket_status_queue"};
 
+// CORE -> MAIN WINDOW
+static mqd_t rocketVisualizationQueue;
+static struct mq_attr rocketVisualizationQueueAttr {
+  .mq_maxmsg = 10, .mq_msgsize = sizeof(msg::RocketVisualizationContainerMsg)
+};
+static const char *ROCKET_VISUALIZATION_QUEUE_FILE{
+    "/rocket_visualization_queue"};
+
+//
 } // namespace comm

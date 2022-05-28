@@ -2,8 +2,10 @@
 #include "../common/classes/SimpleLogger.hpp"
 #include "../common/interfaces/IWindow.hpp"
 #include "../common/templates/TextContainer.hpp"
-
 #include <SFML/Graphics.hpp>
+
+// comms
+#include "../common/MessageTypes.hpp"
 
 using namespace sf;
 
@@ -27,7 +29,7 @@ private:
                                                          "Angle"};
 
   void input();
-  void update(float dtAsSeconds);
+  void update();
   void draw();
 
   // HELPERS
@@ -40,4 +42,10 @@ private:
   // COMMUNICATION SETUP
   void openQueues();
   void closeQueues();
+
+  // COMMUNICATION
+  msg::RocketStatusMsg getStatusData();
+
+  // DATA MANAGMENT
+  void updateElementsState(const msg::RocketStatusMsg &rocketStatusMsg);
 };
