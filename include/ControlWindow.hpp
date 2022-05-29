@@ -6,6 +6,8 @@
 #include "../common/templates/SwitchContainer.hpp"
 #include "../common/templates/TextContainer.hpp"
 #include <SFML/Graphics.hpp>
+
+#include <thread>
 using namespace sf;
 
 class ControlWindow : public IWindow, public SimpleLogger {
@@ -32,6 +34,8 @@ private:
   void input();
   void update();
   void draw();
+
+  // std::thread getAndRunInputProcessingThread();
 
   // COMMUNICATION SETUP
   void openQueues();

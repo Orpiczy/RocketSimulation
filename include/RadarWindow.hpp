@@ -46,7 +46,7 @@ private:
   void update();
   void draw();
 
-  std::thread getUpdatingDataInParallelThread();
+  std::thread getAndRunUpdatingDataThread();
 
   // COMMUNICATION SETUP
   void openQueues();

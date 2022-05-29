@@ -37,16 +37,16 @@ void ControlWindow::input() {
   }
 
   if (sf::Mouse::isButtonPressed(sf::Mouse::Left)) {
-    // LG_INF("CONTROL WINDOW - LMB WAS PRESSED - CHECKING POSITION AND CLICKING
-    // "
-    //       "SWITCH IF NEEDED");
+    LG_INF("CONTROL WINDOW - LMB WAS PRESSED - CHECKING POSITION AND CLICKING "
+           "SWITCH IF NEEDED");
     auto mousePosition = sf::Mouse::getPosition(
         _window); // Mouse position relative to the window
     auto globalMousePosition = _window.mapPixelToCoords(mousePosition);
     int clickecElementId = _thrusterSwitches.click(globalMousePosition);
-    // LG_INF("clickecElementId = ", clickecElementId);
+    LG_INF("clickecElementId = ", clickecElementId);
 
     // update - tak aby dwa side thrustery nigdy nie byly wlaczone razem
+
     switch (clickecElementId) {
     case 0:
 
@@ -88,6 +88,22 @@ void ControlWindow::draw() {
 
   _window.display();
 }
+
+// [[deprecated]] std::thread ControlWindow::getAndRunInputProcessingThread() {
+
+//   auto runningInputProcessingInLoopLambda = [this]() {
+//     LG_INF("CONTROL WINDOW - ENTERING LOOP - InputProcessing lambda in "
+//            "parallel thread");
+//     while (_window.isOpen()) {
+//       input();
+//     }
+//     LG_INF("CONTROL WINDOW - EXITING LOOP - InputProcessing lambda in
+//     parallel "
+//            "thread");
+//   };
+//   std::thread inputProcessingThread(runningInputProcessingInLoopLambda);
+//   return inputProcessingThread;
+// }
 
 //// COMMUNICATION SETUP
 void ControlWindow::openQueues() {

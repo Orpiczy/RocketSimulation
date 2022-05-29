@@ -24,7 +24,7 @@ void RadarWindow::start() {
   LG_INF("RADAR WINDOW - LOOP HAS STARTED");
 
   // jak wyjdzie ze scopa to po prostu go zterminuje
-  auto updatingDataInBackgroundThread = getUpdatingDataInParallelThread();
+  auto updatingDataInBackgroundThread = getAndRunUpdatingDataThread();
 
   while (_window.isOpen()) {
     input();
@@ -55,13 +55,17 @@ void RadarWindow::draw() {
   _window.display();
 }
 
-std::thread RadarWindow::getUpdatingDataInParallelThread() {
-  auto runninUpdateInLoopLambda = [this]() {
+std::thread RadarWindow::getAndRunUpdatingDataThread() {
+  auto runningUpdateInLoopLambda = [this]() {
+    LG_INF(
+        "RadarWindow- ENTERING LOOP - UpdatingData lambda in parallel thread");
     while (_window.isOpen()) {
       update();
     }
+    LG_INF(
+        "RadarWindow- EXITING LOOP - UpdatingData lambda in parallel thread");
   };
-  std::thread updatingThread(runninUpdateInLoopLambda);
+  std::thread updatingThread(runningUpdateInLoopLambda);
   return updatingThread;
 }
 
