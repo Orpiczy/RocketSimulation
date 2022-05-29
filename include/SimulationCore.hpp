@@ -6,6 +6,9 @@
 #include "../common/MessageTypes.hpp"
 #include <mqueue.h>
 
+// sim
+#include "../common/PhysicalConstants.hpp"
+
 class SimulationCore : public SimpleLogger {
 public:
   SimulationCore(bool isLogInfoEnable = true, bool isLogErrorEnable = true);
@@ -16,7 +19,9 @@ public:
 
 private:
   common::RocketParams _rocketParams;
-  common::DestinationParams _destinationParams;
+  common::DestinationParams _destinationParams{
+      .position = {commonConsts::MOON_DISTANCE * (-0.2),
+                   commonConsts::MOON_DISTANCE *(0.8)}};
 
   // CORE
   void startSimulation();

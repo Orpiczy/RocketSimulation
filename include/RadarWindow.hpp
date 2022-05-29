@@ -3,6 +3,12 @@
 #include "../common/interfaces/IWindow.hpp"
 #include <SFML/Graphics.hpp>
 
+// comms
+#include "../common/MessageTypes.hpp"
+
+// thread
+#include <thread>
+
 using namespace sf;
 
 class RadarWindow : public IWindow, public SimpleLogger {
@@ -31,18 +37,31 @@ private:
   float _rocketIconScale = 0.065;
   float _maxRadarSpriteDistane{0.0};
 
-  const char *_windowName = "Radar Window";
+  const char *_windowName{"Radar Window"};
+  const int _radarMaxRange{10'000'000}; // meters
+  float _scaleRealToRadar{0};
+  float _radarMaxRangeInScale{0};
 
   void input();
   void update();
   void draw();
 
+  std::thread getUpdatingDataInParallelThread();
+
   // COMMUNICATION SETUP
   void openQueues();
   void closeQueues();
 
-  //// HELPERS
+  // HELPERS
   void setWindowSizeAndPosition(const Vector2i &mainWindowPosition);
   void setMaxRadarSpriteDistane();
   void setTexturesAndSprites();
+  void setScaleAndRange();
+
+  // COMMUNICATION
+  msg::ObjectsPositionMsg getPositionData();
+
+  // DATA MANAGMENT
+  void updateElementsState(const msg::ObjectsPositionMsg &objectsPositionMsg);
+  void updateRadar(const msg::ObjectsPositionMsg &objectsPositionMsg);
 };

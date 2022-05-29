@@ -92,7 +92,8 @@ void SimulationCore::startSimulation() {
   while (true) {
     // getCurrentThrustersControl();
     // sendVisualizationData();
-    sendRocketStatus();
+    // sendRocketStatus();
+    sendObjectsPosition();
   }
   LG_INF("SIMULATION CORE - ENDING SIMULATION");
 }
@@ -197,6 +198,10 @@ void SimulationCore::getCurrentThrustersControl() {
 
 void SimulationCore::sendObjectsPosition() {
 
+  // TEST
+  // _rocketParams.position.x = _rocketParams.position.x + 1000;
+  // _rocketParams.position.y = _rocketParams.position.y + 1000;
+
   msg::ObjectsPositionMsg objectsPositionMsg{
       .destinationPosition = _destinationParams.position,
       .rockePosition = _rocketParams.position};
@@ -207,7 +212,7 @@ void SimulationCore::sendObjectsPosition() {
            std::string(strerror(errno)));
   }
 
-  LG_INF("SIMULATION CORE - SENT UPDATE ON OBJECTS POSITION");
+  // LG_INF("SIMULATION CORE - SENT UPDATE ON OBJECTS POSITION");
 }
 
 void SimulationCore::sendRocketStatus() {

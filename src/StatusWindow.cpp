@@ -41,8 +41,8 @@ void StatusWindow::input() {
 }
 
 void StatusWindow::update() {
-  auto newData = getStatusData();
-  updateElementsState(newData);
+  // auto newData = getStatusData();
+  //  updateElementsState(newData);
 }
 
 void StatusWindow::draw() {

@@ -13,6 +13,7 @@ RadarWindow::RadarWindow(const Vector2i &mainWindowPosition,
   setWindowSizeAndPosition(mainWindowPosition);
   setMaxRadarSpriteDistane();
   setTexturesAndSprites();
+  setScaleAndRange();
   openQueues();
   LG_INF("RADAR WINDOW - CREATED");
 }
@@ -21,12 +22,12 @@ RadarWindow::~RadarWindow() { closeQueues(); }
 
 void RadarWindow::start() {
   LG_INF("RADAR WINDOW - LOOP HAS STARTED");
-  Clock clock;
+
+  // jak wyjdzie ze scopa to po prostu go zterminuje
+  auto updatingDataInBackgroundThread = getUpdatingDataInParallelThread();
+
   while (_window.isOpen()) {
-    Time dt = clock.restart();
-    float dtAsSeconds = dt.asSeconds();
     input();
-    update();
     draw();
     sf::Event event;
     _window.pollEvent(event);
@@ -41,7 +42,10 @@ void RadarWindow::input() {
   }
 }
 
-void RadarWindow::update() {}
+void RadarWindow::update() {
+  auto newData{getPositionData()};
+  updateElementsState(newData);
+}
 
 void RadarWindow::draw() {
   _window.clear(Color::White);
@@ -49,6 +53,88 @@ void RadarWindow::draw() {
   _window.draw(_rocketSprite);
   _window.draw(_moonSprite);
   _window.display();
+}
+
+std::thread RadarWindow::getUpdatingDataInParallelThread() {
+  auto runninUpdateInLoopLambda = [this]() {
+    while (_window.isOpen()) {
+      update();
+    }
+  };
+  std::thread updatingThread(runninUpdateInLoopLambda);
+  return updatingThread;
+}
+
+//// COMMUNICATION SETUP
+void RadarWindow::openQueues() {
+  if ((comm::objectsPositionQueue =
+           mq_open(comm::OBJECTS_POSITION_QUEUE_FILE, O_CREAT | O_RDWR, 0644,
+                   &comm::objectsPositionQueueAttr)) == -1) {
+    printf(" >> ERROR - Simulation Core - FAILED TO OPEN POSITION QUEUE %s\n",
+           strerror(errno));
+    return;
+  }
+}
+void RadarWindow::closeQueues() {
+  if (mq_close(comm::objectsPositionQueue) == -1) {
+    printf(" >> ERROR - RADAR WINDOW - FAILED TO CLOSE POSITION QUEUE %s\n",
+           strerror(errno));
+  }
+}
+
+//// COMMUNICATION
+msg::ObjectsPositionMsg RadarWindow::getPositionData() {
+  msg::ObjectsPositionMsg objectPositionMsg;
+  if (mq_receive(comm::objectsPositionQueue, (char *)&objectPositionMsg,
+                 sizeof(msg::ObjectsPositionMsg), NULL) == -1) {
+
+    LG_ERR("RADAR WINDOW - FAILED TO RECEIVE DATA - " +
+           std::string(strerror(errno)));
+  } else {
+    // LG_INF("RADAR WINDOW - RECEIVED UPDATE OF DATA");
+  }
+  return objectPositionMsg;
+}
+
+//// DATA MANAGMENT
+void RadarWindow::updateElementsState(
+    const msg::ObjectsPositionMsg &objectsPositionMsg) {
+  updateRadar(objectsPositionMsg);
+}
+
+void RadarWindow::updateRadar(
+    const msg::ObjectsPositionMsg &objectsPositionMsg) {
+
+  float moonPositionInRadarScaleX = (objectsPositionMsg.destinationPosition.x -
+                                     objectsPositionMsg.rockePosition.x) *
+                                    _scaleRealToRadar;
+
+  float moonPositionInRadarScaleY = (objectsPositionMsg.destinationPosition.y -
+                                     objectsPositionMsg.rockePosition.y) *
+                                    _scaleRealToRadar;
+
+  // coefficient that makes moon fit in a circle of a radar if moon is too far()
+  float R = std::sqrt(moonPositionInRadarScaleX * moonPositionInRadarScaleX +
+                      moonPositionInRadarScaleY * moonPositionInRadarScaleY);
+
+  float alfa{1}; // only when its too far
+  if (R > _radarMaxRangeInScale) {
+    alfa = _radarMaxRangeInScale / R;
+  }
+
+  // this is basically relative to the center
+  float moonScaledPositionInRadarScaleX = moonPositionInRadarScaleX * alfa;
+  float moonScaledPositionInRadarScaleY = moonPositionInRadarScaleY * alfa;
+
+  // now we have to move to window coord
+  float moonWindowPositionX =
+      _window.getSize().x / 2 + moonScaledPositionInRadarScaleX;
+  float moonWindowPositionY =
+      _window.getSize().y / 2 -
+      moonScaledPositionInRadarScaleY; // we have minus because moving down is
+                                       // incrasing y for some crazy reason
+
+  _moonSprite.setPosition(moonWindowPositionX, moonWindowPositionY);
 }
 
 //// HELPERS
@@ -102,14 +188,15 @@ void RadarWindow::setTexturesAndSprites() {
   _moonSprite.setPosition(_window.getSize().x / 2, moonIconRealYSize / 2);
 }
 
-// COMMUNICATION SETUP
-void RadarWindow::openQueues() {
-  if ((comm::objectsPositionQueue =
-           mq_open(comm::OBJECTS_POSITION_QUEUE_FILE, O_CREAT | O_RDWR, 0644,
-                   &comm::objectsPositionQueueAttr)) == -1) {
-    printf(" >> ERROR - Simulation Core - FAILED TO OPEN POSITION QUEUE %s\n",
-           strerror(errno));
-    return;
-  }
+void RadarWindow::setScaleAndRange() {
+  float moonIconRealXSize =
+      _moonSprite.getTexture()->getSize().x * _moonSprite.getScale().x;
+  float moonIconRealYSize =
+      _moonSprite.getTexture()->getSize().y * _moonSprite.getScale().y;
+
+  _radarMaxRangeInScale =
+      _window.getSize().y / 2 - std::max(moonIconRealXSize, moonIconRealYSize);
+
+  // I want moon to fit on a screen
+  _scaleRealToRadar = _radarMaxRangeInScale / _radarMaxRange;
 }
-void RadarWindow::closeQueues() { mq_close(comm::objectsPositionQueue); }
