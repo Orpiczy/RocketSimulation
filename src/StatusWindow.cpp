@@ -131,8 +131,12 @@ void StatusWindow::updateDescription() {
 void StatusWindow::updateDisplayedGaugeValues(
     const std::vector<int> &gaugeValues) {
 
+  std::string unit;
+  int angleIndex = 3;
+  // procent "\370" ale nie ma w twojej czcionce
   for (std::size_t i = 0; i < gaugeValues.size(); i++) {
-    std::string stringValue = std::to_string(gaugeValues.at(i)) + " %";
+    unit = i == angleIndex ? "" : "%";
+    std::string stringValue = std::to_string(gaugeValues.at(i)) + unit;
     _gaugeValues.getElements().at(i).setString(stringValue);
   }
 }

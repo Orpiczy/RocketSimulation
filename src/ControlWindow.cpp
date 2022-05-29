@@ -68,7 +68,7 @@ void ControlWindow::input() {
     }
 
     if (clickecElementId != -1) {
-      // publishThrustersControl();
+      publishThrustersControl();
     }
   }
 }

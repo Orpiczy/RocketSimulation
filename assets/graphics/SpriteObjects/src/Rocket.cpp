@@ -6,8 +6,41 @@
 
 namespace spriteObjects {
 
-Rocket::Rocket() {
-  _rocketTexture.loadFromFile(common::IMG_ABS_PATH + "saturnRocketBasic.png");
+Rocket::Rocket(bool isLogInfoEnable, bool isLogErrorEnable)
+    : SimpleLogger(isLogInfoEnable, isLogErrorEnable) {
+  setTextureAndSpriteBaseOnRocketState();
+}
+
+Sprite Rocket::getSprite() {
+  setTextureAndSpriteBaseOnRocketState();
+  return _rocketSprite;
+}
+
+void Rocket::updateSideThrusterState(common::SideThrusterState thrusterState) {
+  _sideThrustersState = thrusterState;
+}
+
+void Rocket::updateMainThrusterState(common::MainThrusterState thrusterState) {
+  _mainThrusterState = thrusterState;
+}
+
+void Rocket::setAngle(const float &angleInDegree) {
+  _rocketSprite.setRotation(angleInDegree);
+}
+
+const Vector2f Rocket::getRocketSpriteSize() const {
+
+  const sf::Vector2f spriteSize(
+      _rocketSprite.getTexture()->getSize().x * _rocketSprite.getScale().x,
+      _rocketSprite.getTexture()->getSize().y * _rocketSprite.getScale().y);
+
+  return spriteSize;
+}
+
+//// HELPERS
+void Rocket::setTextureAndSpriteBaseOnRocketState() {
+  _rocketTexture.loadFromFile(common::IMG_ABS_PATH +
+                              getImageNameBaseOnRocketState());
   _rocketSprite.setTexture(_rocketTexture);
 
   auto scaleX =
@@ -27,23 +60,39 @@ Rocket::Rocket() {
   _rocketSprite.setPosition(_rocketPosition.x, _rocketPosition.y);
 }
 
-Sprite Rocket::getSprite() { return _rocketSprite; }
+const std::string Rocket::getImageNameBaseOnRocketState() {
+  std::string imageName{_rocketModelFilename};
 
-void Rocket::updateSideThrusterState(common::SideThrusterState thrusterState) {}
+  switch (_mainThrusterState) {
+  case common::MainThrusterState::TURN_ON:
+    imageName += "Mon";
+    break;
+  case common::MainThrusterState::TURN_OFF:
+    imageName += "Moff";
+    break;
+  default:
+    imageName += "Moff";
+    break;
+  }
 
-void Rocket::updateMainThrusterState(common::MainThrusterState thrusterState) {}
+  switch (_sideThrustersState) {
+  case common::SideThrusterState::LEFT_ON:
+    imageName += "Sl";
+    break;
+  case common::SideThrusterState::RIGHT_ON:
+    imageName += "Sr";
+    break;
+  case common::SideThrusterState::TURN_OFF:
+    imageName += "Soff";
+    break;
+  default:
+    imageName += "Soff";
+    break;
+  }
 
-void Rocket::setAngle(const float &angleInDegree) {
-  _rocketSprite.setRotation(angleInDegree);
-}
+  imageName += _rocketImageFormat;
 
-const Vector2f Rocket::getRocketSpriteSize() const {
-
-  const sf::Vector2f spriteSize(
-      _rocketSprite.getTexture()->getSize().x * _rocketSprite.getScale().x,
-      _rocketSprite.getTexture()->getSize().y * _rocketSprite.getScale().y);
-
-  return spriteSize;
+  return imageName;
 }
 
 } // end namespace spriteObjects

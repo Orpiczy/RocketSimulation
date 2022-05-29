@@ -126,9 +126,9 @@ void MainWindow::updateElementsState(
 
 void MainWindow::updateRocketState(
     const msg::RocketVisualizationContainerMsg &visualizationContainerMsg) {
-  auto currenRockettAngle = visualizationContainerMsg.angle;
-  LG_INF("MAIN WINDOW - RECEIVED ROCKET ANGLE", currenRockettAngle);
-  _rocket.setAngle(currenRockettAngle);
+  _rocket.setAngle(visualizationContainerMsg.angle);
+  _rocket.updateMainThrusterState(visualizationContainerMsg.mainThrusterState);
+  _rocket.updateSideThrusterState(visualizationContainerMsg.sideThrusterState);
 }
 
 //// SETUP HELPERS

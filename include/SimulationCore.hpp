@@ -8,6 +8,7 @@
 
 // sim
 #include "../common/PhysicalConstants.hpp"
+#include <thread>
 
 class SimulationCore : public SimpleLogger {
 public:
@@ -24,7 +25,14 @@ private:
                    commonConsts::MOON_DISTANCE *(0.8)}};
 
   // CORE
+
+  std::thread getAndRunRunningSimulationInLoopThread();
   void startSimulation();
+  void updateSystemState(const float &dtAsSeconds);
+  void updateLinearMotionPartOfSystemState(const float &dtAsSeconds);
+  void updateRotationalMotionPartOfSystemState(const float &dtAsSeconds);
+  float getAngleInClassicCartesianCoordinateSystem(
+      const float &angleInWindowCoordinateSystem);
 
   // COMMUNICATION
   void sendVisualizationData();

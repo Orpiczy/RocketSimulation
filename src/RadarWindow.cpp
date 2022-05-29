@@ -57,13 +57,13 @@ void RadarWindow::draw() {
 
 std::thread RadarWindow::getAndRunUpdatingDataThread() {
   auto runningUpdateInLoopLambda = [this]() {
-    LG_INF(
-        "RadarWindow- ENTERING LOOP - UpdatingData lambda in parallel thread");
+    LG_INF("RADAR WINDOW - ENTERING LOOP - UpdatingData lambda in parallel "
+           "thread");
     while (_window.isOpen()) {
       update();
     }
     LG_INF(
-        "RadarWindow- EXITING LOOP - UpdatingData lambda in parallel thread");
+        "RADAR WINDOW - EXITING LOOP - UpdatingData lambda in parallel thread");
   };
   std::thread updatingThread(runningUpdateInLoopLambda);
   return updatingThread;
@@ -74,7 +74,7 @@ void RadarWindow::openQueues() {
   if ((comm::objectsPositionQueue =
            mq_open(comm::OBJECTS_POSITION_QUEUE_FILE, O_CREAT | O_RDWR, 0644,
                    &comm::objectsPositionQueueAttr)) == -1) {
-    printf(" >> ERROR - Simulation Core - FAILED TO OPEN POSITION QUEUE %s\n",
+    printf(" >> ERROR - RADAR WINDOW  - FAILED TO OPEN POSITION QUEUE %s\n",
            strerror(errno));
     return;
   }

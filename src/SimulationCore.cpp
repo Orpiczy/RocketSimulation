@@ -12,6 +12,9 @@
 // comms
 #include "../common/CommunicationInfo.hpp"
 
+// sim
+#include "../common/PhysicalConstants.hpp"
+
 SimulationCore::SimulationCore(bool isLogInfoEnable, bool isLogErrorEnable)
     : SimpleLogger(isLogInfoEnable, isLogErrorEnable) {
   openQueues();
@@ -89,15 +92,117 @@ spawnPoint:
 
 void SimulationCore::startSimulation() {
   LG_INF("SIMULATION CORE - STARTING SIMULATION");
+  // while (true) {
+  //   // getCurrentThrustersControl();
+  //   // sendVisualizationData();
+  //   // sendRocketStatus();
+  //   // sendObjectsPosition();
+  // }
+  auto simulationRunningThread = getAndRunRunningSimulationInLoopThread();
   while (true) {
-    // getCurrentThrustersControl();
-    sendVisualizationData();
-    sendRocketStatus();
-    sendObjectsPosition();
   }
   LG_INF("SIMULATION CORE - ENDING SIMULATION");
 }
 
+std::thread SimulationCore::getAndRunRunningSimulationInLoopThread() {
+  auto runningSimulationInLoopLambda = [this]() {
+    LG_INF("SIMULATION CORE - ENTERING LOOP - simulation running lambda in "
+           "parallel thread");
+    Clock clock;
+    while (true) {
+      Time dt = clock.restart();
+      float dtAsSeconds = dt.asSeconds();
+    }
+    LG_INF("SIMULATION CORE - EXITING LOOP - simulation running lambda in "
+           "parallel thread");
+  };
+
+  std::thread simulationRunningThread(runningSimulationInLoopLambda);
+  return simulationRunningThread;
+}
+
+void SimulationCore::updateSystemState(const float &dtAsSeconds) {
+  updateLinearMotionPartOfSystemState(dtAsSeconds);
+  updateRotationalMotionPartOfSystemState(dtAsSeconds);
+}
+
+void SimulationCore::updateLinearMotionPartOfSystemState(
+    const float &dtAsSeconds) {
+
+  float translatedAngle =
+      getAngleInClassicCartesianCoordinateSystem(_rocketParams.angle);
+
+  Vector2f mainEngineForce{0, 0};
+  if (_rocketParams.mainThrusterState == MainThrusterState::TURN_ON) {
+    mainEngineForce.x = cos(translatedAngle) * commonConsts::MAIN_ENGINE_THRUST;
+    mainEngineForce.y = sin(translatedAngle) * commonConsts::MAIN_ENGINE_THRUST;
+  }
+
+  // a1 = F / m
+  _rocketParams.acceleration.x = mainEngineForce.x / commonConsts::ROCKET_MASS;
+  _rocketParams.acceleration.y = mainEngineForce.y / commonConsts::ROCKET_MASS;
+
+  // v1 = a*t
+  _rocketParams.velocity.x =
+      _rocketParams.velocity.x + _rocketParams.acceleration.x * dtAsSeconds;
+  _rocketParams.velocity.y =
+      _rocketParams.velocity.y + _rocketParams.acceleration.y * dtAsSeconds;
+
+  // x1 = x + v*t + 0.5*a*t^2
+  _rocketParams.position.x =
+      _rocketParams.position.x + (_rocketParams.velocity.x * dtAsSeconds) +
+      (0.5 * _rocketParams.acceleration.x * dtAsSeconds * dtAsSeconds);
+  _rocketParams.position.y =
+      _rocketParams.position.y + (_rocketParams.velocity.y * dtAsSeconds) +
+      (0.5 * _rocketParams.acceleration.y * dtAsSeconds * dtAsSeconds);
+}
+
+void SimulationCore::updateRotationalMotionPartOfSystemState(
+    const float &dtAsSeconds) {
+
+  float translatedAngle =
+      getAngleInClassicCartesianCoordinateSystem(_rocketParams.angle);
+
+  int sideThrusterForce{0};
+  switch (_rocketParams.sideThrusterState) {
+
+  case SideThrusterState::LEFT_ON:
+    sideThrusterForce = -commonConsts::SIDE_THRUSTERS_THRUST;
+    break;
+  case SideThrusterState::RIGHT_ON:
+    sideThrusterForce = commonConsts::SIDE_THRUSTERS_THRUST;
+    break;
+  case SideThrusterState::TURN_OFF:
+    sideThrusterForce = 0;
+    break;
+  default:
+    sideThrusterForce = 0;
+    break;
+  }
+
+  float momentOfForce = sideThrusterForce * (0.5 * commonConsts::ROCKET_HEIGHT);
+
+  // Equation down below are angular counterparts for linear motion
+
+  // acceleration
+  _rocketParams.angularAcceleration =
+      momentOfForce / commonConsts::ROCKET_MOMENT_OF_INERTIA;
+
+  // velocity
+  _rocketParams.angularVelocity =
+      _rocketParams.angularVelocity +
+      (_rocketParams.angularAcceleration * dtAsSeconds);
+
+  // angle
+  _rocketParams.angle =
+      _rocketParams.angle + (_rocketParams.angularVelocity * dtAsSeconds) +
+      (0.5 * _rocketParams.angularAcceleration * dtAsSeconds * dtAsSeconds);
+}
+
+float SimulationCore::getAngleInClassicCartesianCoordinateSystem(
+    const float &angleInWindowCoordinateSystem) {
+  return 90 - angleInWindowCoordinateSystem;
+}
 //// COMMUNICATION SETUP
 void SimulationCore::openQueues() {
 
@@ -164,7 +269,8 @@ void SimulationCore::closeQueues() {
 //// COMMUNICATION
 
 void SimulationCore::sendVisualizationData() {
-  _rocketParams.angle = _rocketParams.angle + 3.6;
+  // _rocketParams.angle = _rocketParams.angle + 0.36;
+  _rocketParams.angle = 90;
   msg::RocketVisualizationContainerMsg visualizationContainerMsg{
       .velocity = _rocketParams.velocity,
       .angle = _rocketParams.angle,
@@ -194,6 +300,9 @@ void SimulationCore::getCurrentThrustersControl() {
     LG_INF("SIMULATION CORE - RECEIVED UPDATE OF THRUSTERS CONTROL");
     LogReceivedControl(thrusterStateMsg);
   }
+
+  _rocketParams.mainThrusterState = thrusterStateMsg.mainThrusterState;
+  _rocketParams.sideThrusterState = thrusterStateMsg.sideThrusterState;
 }
 
 void SimulationCore::sendObjectsPosition() {
@@ -216,7 +325,7 @@ void SimulationCore::sendObjectsPosition() {
 }
 
 void SimulationCore::sendRocketStatus() {
-  _rocketParams.oxygen = _rocketParams.oxygen + 0.01;
+  _rocketParams.oxygen = _rocketParams.oxygen + 36;
   msg::RocketStatusMsg rocketStatusMsg{.oxygen = _rocketParams.oxygen,
                                        .fuel = _rocketParams.fuel,
                                        .velocity = _rocketParams.velocity,

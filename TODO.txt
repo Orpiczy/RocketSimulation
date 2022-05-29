@@ -8,3 +8,6 @@
 8. Dlaczego uklad wspolrzednych okien jest taki kopniety y w dol rosnie
 9. Publikowanie cmd w Control Window sie zcina czasem
 10. Przerzuc funkcje runInParallel do interfejsu IWindow, zastanow sie czy na pewno jest to piekielnie konieczne
+
+// DO DOWIEDZENIA SIE
+1. Jak tylko dodajesz informacje do kolejki to po pewnym czasie sie zatnie i kicha 

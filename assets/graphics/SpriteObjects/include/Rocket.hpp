@@ -1,14 +1,15 @@
 #pragma once
 #include "../../../../common/CommonTypes.hpp"
+#include "../../../../common/classes/SimpleLogger.hpp"
 #include <SFML/Graphics.hpp>
 
 using namespace sf;
 
 namespace spriteObjects {
 
-class Rocket {
+class Rocket : public SimpleLogger {
 public:
-  Rocket();
+  Rocket(bool isLogInfoEnable = true, bool isLogErrorEnable = true);
 
   Sprite getSprite();
 
@@ -20,13 +21,20 @@ private:
   Texture _rocketTexture;
   Sprite _rocketSprite;
   Vector2f _rocketPosition;
-
   const Vector2f getRocketSpriteSize() const;
 
-  struct thrusterState {
-    common::MainThrusterState mainThrusterState;
-    common::SideThrusterState sideThrusterState;
-  };
+  common::MainThrusterState _mainThrusterState;
+  common::SideThrusterState _sideThrustersState;
+
+  // HELPERS
+  void setTextureAndSpriteBaseOnRocketState();
+  const std::string getImageNameBaseOnRocketState();
+
+  // Dictates which picture should you load
+  const std::string _rocketModelFilename{"rocket/saturnRocketBasic"};
+  const std::string _sideThrustersStateFilenamePart{"Soff"};
+  const std::string _mainThrusterStateFilenamePart{"Moff"};
+  const std::string _rocketImageFormat{".png"};
 };
 
 } // end namespace spriteObjects

@@ -79,7 +79,10 @@ struct RocketParams {
   StorageTank fuel{0};
   sf::Vector2f position{0, 0};
   sf::Vector2f velocity{0, 0};
+  sf::Vector2f acceleration{0, 0};
   RocketAngle angle{0};
+  float angularVelocity{0};
+  float angularAcceleration{0};
   MainThrusterState mainThrusterState{MainThrusterState::TURN_OFF};
   SideThrusterState sideThrusterState{SideThrusterState::TURN_OFF};
 };
