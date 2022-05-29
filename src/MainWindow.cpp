@@ -25,12 +25,11 @@ void MainWindow::start() {
 
   LG_INF("MAIN WINDOW - LOOP HAS STARTED");
 
+  auto updatingDataInBackgroundThread = getAndRunUpdatingDataThread();
+
   while (_window.isOpen()) {
-
     input();
-    update();
     draw();
-
     sf::Event event;
     _window.pollEvent(event);
   }
@@ -64,8 +63,8 @@ void MainWindow::input() {
 }
 
 void MainWindow::update() {
-  // auto newData = getVisualizationData();
-  // updateElementsState(newData);
+  auto newData = getVisualizationData();
+  updateElementsState(newData);
 }
 
 void MainWindow::draw() {
@@ -75,8 +74,21 @@ void MainWindow::draw() {
   _window.display();
 }
 
-//// COMMUNICATION SETUP
+std::thread MainWindow::getAndRunUpdatingDataThread() {
+  auto runningUpdateInLoopLambda = [this]() {
+    LG_INF(
+        "MAIN WINDOW - ENTERING LOOP - UpdatingData lambda in parallel thread");
+    while (_window.isOpen()) {
+      update();
+    }
+    LG_INF(
+        "MAIN WINDOW- EXITING LOOP - UpdatingData lambda in parallel thread");
+  };
+  std::thread updatingThread(runningUpdateInLoopLambda);
+  return updatingThread;
+}
 
+//// COMMUNICATION SETUP
 void MainWindow::openQueues() {
   if ((comm::rocketVisualizationQueue =
            mq_open(comm::ROCKET_VISUALIZATION_QUEUE_FILE, O_CREAT | O_RDWR,

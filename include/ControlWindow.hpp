@@ -35,7 +35,7 @@ private:
   void update();
   void draw();
 
-  // std::thread getAndRunInputProcessingThread();
+  [[deprecated]] std::thread getAndRunInputProcessingThread();
 
   // COMMUNICATION SETUP
   void openQueues();

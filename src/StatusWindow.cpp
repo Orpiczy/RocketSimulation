@@ -23,9 +23,9 @@ void StatusWindow::start() {
 
   LG_INF("STATUS WINDOW - LOOP HAS STARTED");
 
+  auto updatingDataInBackgroundThread = getAndRunUpdatingDataThread();
   while (_window.isOpen()) {
     input();
-    update();
     draw();
     sf::Event event;
     _window.pollEvent(event);
@@ -41,8 +41,8 @@ void StatusWindow::input() {
 }
 
 void StatusWindow::update() {
-  // auto newData = getStatusData();
-  //  updateElementsState(newData);
+  auto newData = getStatusData();
+  updateElementsState(newData);
 }
 
 void StatusWindow::draw() {
@@ -58,7 +58,22 @@ void StatusWindow::draw() {
   _window.display();
 }
 
-// COMMUNICATION SETUP
+std::thread StatusWindow::getAndRunUpdatingDataThread() {
+
+  auto runningUpdateInLoopLambda = [this]() {
+    LG_INF("STATUS WINDOW - ENTERING LOOP - UpdatingData lambda in parallel "
+           "thread");
+    while (_window.isOpen()) {
+      update();
+    }
+    LG_INF("STATUS WINDOW - EXITING LOOP - UpdatingData lambda in parallel "
+           "thread");
+  };
+  std::thread updatingThread(runningUpdateInLoopLambda);
+  return updatingThread;
+}
+
+//// COMMUNICATION SETUP
 void StatusWindow::openQueues() {
   if ((comm::rocketStatusQueue =
            mq_open(comm::ROCKET_STATUS_QUEUE_FILE, O_CREAT | O_RDWR, 0644,

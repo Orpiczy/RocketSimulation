@@ -7,6 +7,8 @@
 // comms
 #include "../common/MessageTypes.hpp"
 
+#include <thread>
+
 using namespace sf;
 
 class StatusWindow : public IWindow, public SimpleLogger {
@@ -31,6 +33,8 @@ private:
   void input();
   void update();
   void draw();
+
+  std::thread getAndRunUpdatingDataThread();
 
   // HELPERS
   void setWindowSizeAndPosition(const Vector2i &mainWindowPosition);

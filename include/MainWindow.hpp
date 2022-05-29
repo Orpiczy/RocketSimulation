@@ -2,14 +2,17 @@
 
 #include "../assets/graphics/SpriteObjects/include/Rocket.hpp"
 #include "../common/classes/SimpleLogger.hpp"
+#include "../common/interfaces/IWindow.hpp"
 #include <SFML/Graphics.hpp>
 
 // comms
 #include "../common/MessageTypes.hpp"
 
+#include <thread>
+
 using namespace sf;
 
-class MainWindow : public SimpleLogger {
+class MainWindow : public IWindow, public SimpleLogger {
 public:
   MainWindow(const Vector2i &referencePoint = {0, 0},
              bool isLogInfoEnable = true, bool isLogErrorEnable = true);
@@ -27,6 +30,8 @@ private:
   void input();
   void update();
   void draw();
+
+  std::thread getAndRunUpdatingDataThread();
 
   // COMMUNICATION SETUP
   void openQueues();

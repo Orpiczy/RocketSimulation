@@ -91,8 +91,8 @@ void SimulationCore::startSimulation() {
   LG_INF("SIMULATION CORE - STARTING SIMULATION");
   while (true) {
     // getCurrentThrustersControl();
-    // sendVisualizationData();
-    // sendRocketStatus();
+    sendVisualizationData();
+    sendRocketStatus();
     sendObjectsPosition();
   }
   LG_INF("SIMULATION CORE - ENDING SIMULATION");
@@ -164,7 +164,7 @@ void SimulationCore::closeQueues() {
 //// COMMUNICATION
 
 void SimulationCore::sendVisualizationData() {
-
+  _rocketParams.angle = _rocketParams.angle + 3.6;
   msg::RocketVisualizationContainerMsg visualizationContainerMsg{
       .velocity = _rocketParams.velocity,
       .angle = _rocketParams.angle,
