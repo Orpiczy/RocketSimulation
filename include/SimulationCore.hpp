@@ -20,9 +20,11 @@ public:
 
 private:
   common::RocketParams _rocketParams;
-  common::DestinationParams _destinationParams{
-      .position = {commonConsts::MOON_DISTANCE * (-0.2),
-                   commonConsts::MOON_DISTANCE *(0.8)}};
+  // const float _moonDistanceScale{0.01};
+  // common::DestinationParams _destinationParams{
+  //     .position = {commonConsts::MOON_DISTANCE * (-0.2) / 100000,
+  //                  commonConsts::MOON_DISTANCE *(0.8) / 100000}};
+  common::DestinationParams _destinationParams{.position = {0, 5000}};
 
   // CORE
   std::thread getAndRunRunningSimulationInLoopThread();
@@ -33,8 +35,7 @@ private:
   void updateSystemState(const float &dtAsSeconds);
   void updateLinearMotionPartOfSystemState(const float &dtAsSeconds);
   void updateRotationalMotionPartOfSystemState(const float &dtAsSeconds);
-  float getAngleInClassicCartesianCoordinateSystem(
-      const float &angleInWindowCoordinateSystem);
+  float getAngleInRadiansInClassicCoordinateSystem(const float &angle);
 
   // COMMUNICATION
   void sendVisualizationData();

@@ -14,7 +14,7 @@ using namespace sf;
 class StatusWindow : public IWindow, public SimpleLogger {
 public:
   StatusWindow(const Vector2i &mainWindowPosition = {0, 0},
-               bool isLogInfoEnable = true, bool isLogErrorEnable = true);
+               bool isLogInfoEnable = false, bool isLogErrorEnable = true);
 
   ~StatusWindow();
   void start();

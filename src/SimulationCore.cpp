@@ -15,6 +15,9 @@
 // sim
 #include "../common/PhysicalConstants.hpp"
 
+// debug
+#include <sstream>
+
 SimulationCore::SimulationCore(bool isLogInfoEnable, bool isLogErrorEnable)
     : SimpleLogger(isLogInfoEnable, isLogErrorEnable) {
   openQueues();
@@ -97,7 +100,11 @@ void SimulationCore::startSimulation() {
   auto updatingControlThread = getAndRunUpdatingControlInLoopThread();
 
   while (true) {
+    if (Keyboard::isKeyPressed(Keyboard::Escape)) {
+      break;
+    }
   }
+
   LG_INF("SIMULATION CORE - ENDING SIMULATION");
 }
 
@@ -165,6 +172,7 @@ std::thread SimulationCore::getAndRunRunningSimulationInLoopThread() {
     while (true) {
       Time dt = clock.restart();
       float dtAsSeconds = dt.asSeconds();
+      updateSystemState(dtAsSeconds);
     }
     LG_INF("SIMULATION CORE - EXITING LOOP - simulation running lambda in "
            "parallel thread");
@@ -182,20 +190,37 @@ void SimulationCore::updateSystemState(const float &dtAsSeconds) {
 void SimulationCore::updateLinearMotionPartOfSystemState(
     const float &dtAsSeconds) {
 
-  float translatedAngle =
-      getAngleInClassicCartesianCoordinateSystem(_rocketParams.angle);
-
   Vector2f mainEngineForce{0, 0};
+
   if (_rocketParams.mainThrusterState == MainThrusterState::TURN_ON) {
-    mainEngineForce.x = cos(translatedAngle) * commonConsts::MAIN_ENGINE_THRUST;
-    mainEngineForce.y = sin(translatedAngle) * commonConsts::MAIN_ENGINE_THRUST;
+    mainEngineForce.x =
+        cos(getAngleInRadiansInClassicCoordinateSystem(_rocketParams.angle)) *
+        commonConsts::MAIN_ENGINE_THRUST; // plus 90 due to rotate coordinate
+                                          // system
+    mainEngineForce.y =
+        sin(getAngleInRadiansInClassicCoordinateSystem(_rocketParams.angle)) *
+        commonConsts::MAIN_ENGINE_THRUST;
   }
 
   // a1 = F / m
   _rocketParams.acceleration.x = mainEngineForce.x / commonConsts::ROCKET_MASS;
   _rocketParams.acceleration.y = mainEngineForce.y / commonConsts::ROCKET_MASS;
 
-  // v1 = a*t
+  std::ostringstream ss;
+  ss << "SIMCORE cos alfa "
+     << cos(getAngleInRadiansInClassicCoordinateSystem(_rocketParams.angle))
+     << " sin alfa"
+     << sin(getAngleInRadiansInClassicCoordinateSystem(_rocketParams.angle))
+     << "angle" << _rocketParams.angle << "-  acc y "
+     << _rocketParams.acceleration.y << " mainEngineForce.y "
+     << mainEngineForce.y << " - acc x " << _rocketParams.acceleration.x
+     << " mainEngineForce.x " << mainEngineForce.x << std::endl;
+
+  // debug
+  //  if (_rocketParams.acceleration.x != 0) {
+  //    LG_INF(ss.str());
+  //  }
+  //  v1 = a*t
   _rocketParams.velocity.x =
       _rocketParams.velocity.x + _rocketParams.acceleration.x * dtAsSeconds;
   _rocketParams.velocity.y =
@@ -210,12 +235,15 @@ void SimulationCore::updateLinearMotionPartOfSystemState(
       (0.5 * _rocketParams.acceleration.y * dtAsSeconds * dtAsSeconds);
 }
 
+float SimulationCore::getAngleInRadiansInClassicCoordinateSystem(
+    const float &angle) {
+  float translatedAngle = angle + 90;
+  float translatedAngleInRadians = translatedAngle * 2 * M_PI / 360;
+  return translatedAngleInRadians;
+}
+
 void SimulationCore::updateRotationalMotionPartOfSystemState(
     const float &dtAsSeconds) {
-
-  float translatedAngle =
-      getAngleInClassicCartesianCoordinateSystem(_rocketParams.angle);
-
   int sideThrusterForce{0};
   switch (_rocketParams.sideThrusterState) {
 
@@ -241,6 +269,16 @@ void SimulationCore::updateRotationalMotionPartOfSystemState(
   _rocketParams.angularAcceleration =
       momentOfForce / commonConsts::ROCKET_MOMENT_OF_INERTIA;
 
+  // debug
+  std::ostringstream ss;
+  ss << "SIMCORE - calculated angular acceleration as "
+     << _rocketParams.angularAcceleration << " moment of Force "
+     << momentOfForce;
+
+  // if (_rocketParams.angularAcceleration != 0) {
+  //   LG_INF(ss.str());
+  // }
+
   // velocity
   _rocketParams.angularVelocity =
       _rocketParams.angularVelocity +
@@ -252,10 +290,6 @@ void SimulationCore::updateRotationalMotionPartOfSystemState(
       (0.5 * _rocketParams.angularAcceleration * dtAsSeconds * dtAsSeconds);
 }
 
-float SimulationCore::getAngleInClassicCartesianCoordinateSystem(
-    const float &angleInWindowCoordinateSystem) {
-  return 90 - angleInWindowCoordinateSystem;
-}
 //// COMMUNICATION SETUP
 void SimulationCore::openQueues() {
 
@@ -323,7 +357,7 @@ void SimulationCore::closeQueues() {
 
 void SimulationCore::sendVisualizationData() {
   // _rocketParams.angle = _rocketParams.angle + 0.36;
-  _rocketParams.angle = 90;
+  // _rocketParams.angle = 90;
   msg::RocketVisualizationContainerMsg visualizationContainerMsg{
       .velocity = _rocketParams.velocity,
       .angle = _rocketParams.angle,
@@ -338,7 +372,7 @@ void SimulationCore::sendVisualizationData() {
     LG_ERR("SIMULATION CORE - FAILED TO SEND VISUALIZATION DATA - " +
            std::string(strerror(errno)));
   } else {
-    LG_INF("SIMULATION CORE - SENT UPDATE ON VISUALIZATION DATA");
+    // LG_INF("SIMULATION CORE - SENT UPDATE ON VISUALIZATION DATA");
   }
 }
 
@@ -350,8 +384,8 @@ void SimulationCore::updateCurrentThrustersControl() {
     LG_ERR("SIMULATION CORE - FAILED TO RECEIVE CONTROL - " +
            std::string(strerror(errno)));
   } else {
-    LG_INF("SIMULATION CORE - RECEIVED UPDATE OF THRUSTERS CONTROL");
-    LogReceivedControl(thrusterStateMsg);
+    // LG_INF("SIMULATION CORE - RECEIVED UPDATE OF THRUSTERS CONTROL");
+    // LogReceivedControl(thrusterStateMsg);
   }
 
   _rocketParams.mainThrusterState = thrusterStateMsg.mainThrusterState;
@@ -388,9 +422,9 @@ void SimulationCore::sendRocketStatus() {
               sizeof(msg::RocketStatusMsg), 0) == -1) {
     LG_ERR("SIMULATION CORE - FAILED TO SEND ROCKET STATUS POSITION - " +
            std::string(strerror(errno)));
+  } else {
+    // LG_INF("SIMULATION CORE - SENT UPDATE ON ROCKET STATUS");
   }
-
-  LG_INF("SIMULATION CORE - SENT UPDATE ON ROCKET STATUS");
 }
 
 //// LOG HELPERS

@@ -25,6 +25,8 @@ private:
   sf::Font font;
 
   const char *_windowName = "Control Window";
+  const std::vector<std::string> _descriptionLookUpTable{
+      "LEFT THRUSTER", "MAIN ENGINE", "RIGHT THRUSTER"};
   const static uint8_t _nrOfElements{3};
   const std::map<uint8_t, std::string> _descriptionMap{
       {0, "LEFT"}, {1, "MAIN"}, {2, "RIGHT"}};
@@ -53,6 +55,7 @@ private:
       const std::array<bool, _nrOfElements> switchesState) const;
 
   // HELPERS
+  void updateDescription();
   void setWindowSizeAndPosition(const Vector2i &mainWindowPosition);
   void setTexturesAndSprites();
   void setUpElements();

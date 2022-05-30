@@ -25,7 +25,9 @@ void Rocket::updateMainThrusterState(common::MainThrusterState thrusterState) {
 }
 
 void Rocket::setAngle(const float &angleInDegree) {
-  _rocketSprite.setRotation(angleInDegree);
+  _rocketSprite.setRotation(
+      -angleInDegree); // COORDINATE SYSTEM HAS DIFFERENT ORIENTATION HERE,
+                       // THAT'S WHY MINUS
 }
 
 const Vector2f Rocket::getRocketSpriteSize() const {

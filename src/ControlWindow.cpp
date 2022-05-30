@@ -10,6 +10,7 @@ ControlWindow::ControlWindow(const Vector2i &mainWindowPosition,
                              bool isLogInfoEnable, bool isLogErrorEnable)
     : SimpleLogger(isLogInfoEnable, isLogErrorEnable) {
   setWindowSizeAndPosition(mainWindowPosition);
+  updateDescription();
   setTexturesAndSprites();
   setUpElements();
   openQueues();
@@ -211,4 +212,11 @@ void ControlWindow::setUpElements() {
                       common::COMMAND_WINDOW_OBJECTS_X_MARGIN,
                       common::COMMAND_WINDOW_OBJECTS_Y_MARGIN,
                       LayoutType::columnLayout);
+}
+
+void ControlWindow::updateDescription() {
+  auto &rawDescriptions = _descriptions.getElements();
+  for (std::size_t i = 0; i < rawDescriptions.size(); i++) {
+    rawDescriptions.at(i).setString(_descriptionLookUpTable.at(i));
+  }
 }

@@ -7,6 +7,9 @@
 #include <mqueue.h>
 #include <string.h>
 
+// debug
+#include <sstream>
+
 MainWindow::MainWindow(const Vector2i &referencePoint, bool isLogInfoEnable,
                        bool isLogErrorEnable)
     : SimpleLogger(isLogInfoEnable, isLogErrorEnable) {
@@ -37,28 +40,9 @@ void MainWindow::start() {
 
 void MainWindow::input() {
 
-  // if (sf::Mouse::isButtonPressed(sf::Mouse::Left))
-  // {
-  //     sf::Vector2i position = sf::Mouse::getPosition();
-  //     std::cout<<"Mouse position x = " << position.x << ", y = " <<
-  //     position.y << std::endl;
-  // }
-
   if (Keyboard::isKeyPressed(Keyboard::Escape)) {
     LG_INF("MAIN WINDOW - ESC WAS PRESSED, CLOSING WINDOW, EXITING LOOP");
     _window.close();
-  }
-
-  if (Keyboard::isKeyPressed(Keyboard::A)) {
-    // _rocket.moveLeft();
-  } else {
-    // _rocket.stopLeft();
-  }
-
-  if (Keyboard::isKeyPressed(Keyboard::D)) {
-    // _rocket.moveRight();
-  } else {
-    // _rocket.stopRight();
   }
 }
 
@@ -71,6 +55,7 @@ void MainWindow::draw() {
   _window.clear(Color::White);
   _window.draw(_backgroundSprite);
   _window.draw(_rocket.getSprite());
+  _window.draw(_moon.getSprite());
   _window.display();
 }
 
@@ -112,7 +97,7 @@ msg::RocketVisualizationContainerMsg MainWindow::getVisualizationData() {
     LG_ERR("MAIN WINDOW - FAILED TO RECEIVE VISUALIZATION DATA - " +
            std::string(strerror(errno)));
   } else {
-    LG_INF("MAIN WINDOW - RECEIVED UPDATE OF VISUALIZATION DATA");
+    // LG_INF("MAIN WINDOW - RECEIVED UPDATE OF VISUALIZATION DATA");
   }
   return visualizationContainerMsg;
 }
@@ -126,9 +111,25 @@ void MainWindow::updateElementsState(
 
 void MainWindow::updateRocketState(
     const msg::RocketVisualizationContainerMsg &visualizationContainerMsg) {
+
+  // ROCKET
   _rocket.setAngle(visualizationContainerMsg.angle);
   _rocket.updateMainThrusterState(visualizationContainerMsg.mainThrusterState);
   _rocket.updateSideThrusterState(visualizationContainerMsg.sideThrusterState);
+
+  // MOON
+  Vector2f moonRelativePosition{0, 0};
+  moonRelativePosition.x = visualizationContainerMsg.destinationPosition.x -
+                           visualizationContainerMsg.rockePosition.x;
+  moonRelativePosition.y = visualizationContainerMsg.destinationPosition.y -
+                           visualizationContainerMsg.rockePosition.y;
+  _moon.setPositon(moonRelativePosition);
+
+  // debug
+  //  std::ostringstream ss;
+  //  ss << "moon relative position x = " << moonRelativePosition.x
+  //     << " y = " << moonRelativePosition.y;
+  //  LG_INF(ss.str());
 }
 
 //// SETUP HELPERS

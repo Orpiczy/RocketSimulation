@@ -38,7 +38,7 @@ private:
   float _maxRadarSpriteDistane{0.0};
 
   const char *_windowName{"Radar Window"};
-  const int _radarMaxRange{10'000'000}; // meters
+  const int _radarMaxRange{10'000}; // meters
   float _scaleRealToRadar{0};
   float _radarMaxRangeInScale{0};
 

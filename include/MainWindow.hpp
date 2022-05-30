@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../assets/graphics/SpriteObjects/include/Moon.hpp"
 #include "../assets/graphics/SpriteObjects/include/Rocket.hpp"
 #include "../common/classes/SimpleLogger.hpp"
 #include "../common/interfaces/IWindow.hpp"
@@ -26,6 +27,7 @@ private:
   Sprite _backgroundSprite;
 
   spriteObjects::Rocket _rocket;
+  spriteObjects::Moon _moon;
 
   void input();
   void update();
