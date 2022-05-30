@@ -23,8 +23,10 @@ private:
   Vector2f _rocketPosition;
   const Vector2f getRocketSpriteSize() const;
 
-  common::MainThrusterState _mainThrusterState;
-  common::SideThrusterState _sideThrustersState;
+  common::MainThrusterState _mainThrusterState{
+      common::MainThrusterState::TURN_OFF};
+  common::SideThrusterState _sideThrustersState{
+      common::SideThrusterState::TURN_OFF};
 
   // HELPERS
   void setTextureAndSpriteBaseOnRocketState();

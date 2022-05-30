@@ -25,8 +25,10 @@ private:
                    commonConsts::MOON_DISTANCE *(0.8)}};
 
   // CORE
-
   std::thread getAndRunRunningSimulationInLoopThread();
+  std::thread getAndRunSendingDataInLoopThread();
+  std::thread getAndRunUpdatingControlInLoopThread();
+
   void startSimulation();
   void updateSystemState(const float &dtAsSeconds);
   void updateLinearMotionPartOfSystemState(const float &dtAsSeconds);
@@ -36,9 +38,13 @@ private:
 
   // COMMUNICATION
   void sendVisualizationData();
-  void getCurrentThrustersControl();
+  void updateCurrentThrustersControl();
   void sendObjectsPosition();
   void sendRocketStatus();
+
+  const sf::Time _sendingVisualizationDataPeriod{sf::milliseconds(20)}; //~50fps
+  const sf::Time _sendingObjectsPositionPeriod{sf::milliseconds(100)};
+  const sf::Time _sendingRocketStatusPeriod{sf::milliseconds(100)};
 
   // COMMUNICATION SETUP
   void openQueues();

@@ -92,18 +92,71 @@ spawnPoint:
 
 void SimulationCore::startSimulation() {
   LG_INF("SIMULATION CORE - STARTING SIMULATION");
-  // while (true) {
-  //   // getCurrentThrustersControl();
-  //   // sendVisualizationData();
-  //   // sendRocketStatus();
-  //   // sendObjectsPosition();
-  // }
   auto simulationRunningThread = getAndRunRunningSimulationInLoopThread();
+  auto sendingDataThread = getAndRunSendingDataInLoopThread();
+  auto updatingControlThread = getAndRunUpdatingControlInLoopThread();
+
   while (true) {
   }
   LG_INF("SIMULATION CORE - ENDING SIMULATION");
 }
 
+std::thread SimulationCore::getAndRunSendingDataInLoopThread() {
+
+  auto sendingDataInLoopLambda = [this]() {
+    LG_INF("SIMULATION CORE - ENTERING LOOP - sending data lambda in "
+           "parallel thread");
+
+    Clock sendingVisualizationTimer;
+    Clock sendingPositionTimer;
+    Clock sendingRocketStatusTimer;
+
+    while (true) {
+
+      if (sendingVisualizationTimer.getElapsedTime() >
+          _sendingVisualizationDataPeriod) {
+        sendingVisualizationTimer.restart();
+        sendVisualizationData();
+      }
+
+      if (sendingPositionTimer.getElapsedTime() >
+          _sendingObjectsPositionPeriod) {
+        sendingPositionTimer.restart();
+        sendObjectsPosition();
+      }
+
+      if (sendingRocketStatusTimer.getElapsedTime() >
+          _sendingRocketStatusPeriod) {
+        sendingRocketStatusTimer.restart();
+        sendRocketStatus();
+      }
+    }
+
+    LG_INF("SIMULATION CORE - EXITING LOOP - sending data lambda in "
+           "parallel thread");
+  };
+
+  std::thread sendingDataThread(sendingDataInLoopLambda);
+  return sendingDataThread;
+}
+
+std::thread SimulationCore::getAndRunUpdatingControlInLoopThread() {
+  auto updatingDataInLoopLambda = [this]() {
+    LG_INF("SIMULATION CORE - ENTERING LOOP - receiving control data "
+           "lambda in "
+           "parallel thread");
+
+    while (true) {
+      updateCurrentThrustersControl();
+    }
+
+    LG_INF("SIMULATION CORE - EXITING LOOP - receiving control data lambda in "
+           "parallel thread");
+  };
+
+  std::thread updatingControlThread(updatingDataInLoopLambda);
+  return updatingControlThread;
+}
 std::thread SimulationCore::getAndRunRunningSimulationInLoopThread() {
   auto runningSimulationInLoopLambda = [this]() {
     LG_INF("SIMULATION CORE - ENTERING LOOP - simulation running lambda in "
@@ -289,7 +342,7 @@ void SimulationCore::sendVisualizationData() {
   }
 }
 
-void SimulationCore::getCurrentThrustersControl() {
+void SimulationCore::updateCurrentThrustersControl() {
   msg::ThrustersStateMsg thrusterStateMsg;
 
   if (mq_receive(comm::thrustersControlQueue, (char *)&thrusterStateMsg,
