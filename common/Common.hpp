@@ -14,29 +14,38 @@ static const int RESOLUTION_X{1920};
 static const int RESOLUTION_Y{1080};
 static const int X_MARGIN_SIZE{10};
 static const int Y_MARGIN_SIZE{10};
-static const auto DEFAULT_WINDOW_STYLE = sf::Style::Resize;
+static const auto DEFAULT_WINDOW_STYLE = sf::Style::None;
 
 // Layout z paskiem kontrolnym obok
 static const int MAIN_WINDOW_X_SIZE{RESOLUTION_X * 2 / 3};
-static const int MAIN_WINDOW_Y_SIZE{RESOLUTION_Y};
+static const int MAIN_WINDOW_Y_SIZE{RESOLUTION_Y * 5 / 6};
 
-static const int SIDE_WINDOW_X_SIZE{RESOLUTION_X - MAIN_WINDOW_X_SIZE -
-                                    X_MARGIN_SIZE};
+static const int SIDE_WINDOW_X_SIZE{
+    (RESOLUTION_X - MAIN_WINDOW_X_SIZE - X_MARGIN_SIZE) * 3 / 4};
 static const int SIDE_WINDOW_Y_SIZE{(RESOLUTION_Y - 2 * Y_MARGIN_SIZE) / 3};
-static const int CONTROL_WINDOW_X_SIZE{SIDE_WINDOW_X_SIZE};
-static const int CONTROL_WINDOW_Y_SIZE{SIDE_WINDOW_Y_SIZE};
 
+// RADAR
 static const int RADAR_WINDOW_X_RELATIVE_POS{MAIN_WINDOW_X_SIZE +
                                              X_MARGIN_SIZE};
 static const int RADAR_WINDOW_Y_RELATIVE_POS{0};
+static const int RADAR_WINDOW_X_SIZE{SIDE_WINDOW_X_SIZE};
+static const int RADAR_WINDOW_Y_SIZE{SIDE_WINDOW_X_SIZE};
 
+// STATUS
 static const int STATUS_WINDOW_X_RELATIVE_POS{RADAR_WINDOW_X_RELATIVE_POS};
 static const int STATUS_WINDOW_Y_RELATIVE_POS{
-    RADAR_WINDOW_Y_RELATIVE_POS + SIDE_WINDOW_Y_SIZE + Y_MARGIN_SIZE};
+    RADAR_WINDOW_Y_RELATIVE_POS + RADAR_WINDOW_Y_SIZE + 4 * Y_MARGIN_SIZE};
 
+static const int STATUS_WINDOW_X_SIZE{SIDE_WINDOW_X_SIZE};
+static const int STATUS_WINDOW_Y_SIZE{SIDE_WINDOW_Y_SIZE};
+
+// CONTROL
 static const int CONTROL_WINDOW_X_RELATIVE_POS{RADAR_WINDOW_X_RELATIVE_POS};
 static const int CONTROL_WINDOW_Y_RELATIVE_POS{
-    STATUS_WINDOW_Y_RELATIVE_POS + SIDE_WINDOW_Y_SIZE + Y_MARGIN_SIZE};
+    STATUS_WINDOW_Y_RELATIVE_POS + STATUS_WINDOW_Y_SIZE + Y_MARGIN_SIZE};
+
+static const int CONTROL_WINDOW_X_SIZE{SIDE_WINDOW_X_SIZE};
+static const int CONTROL_WINDOW_Y_SIZE{SIDE_WINDOW_Y_SIZE * 3 / 4};
 
 // Layout z paskiem kontrolnym na dole
 /*

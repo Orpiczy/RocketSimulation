@@ -54,9 +54,12 @@ void MainWindow::update() {
 void MainWindow::draw() {
   _window.clear(Color::White);
   _window.draw(_backgroundSprite);
+  for (auto &starDust : _starDustContainerInBackground.getElements()) {
+    _window.draw(starDust.getSprite());
+  }
   _window.draw(_rocket.getSprite());
   _window.draw(_moon.getSprite());
-  for (auto &starDust : _starDustContainer.getElements()) {
+  for (auto &starDust : _starDustContainerInForeground.getElements()) {
     _window.draw(starDust.getSprite());
   }
   _window.display();
@@ -138,7 +141,14 @@ void MainWindow::updateRocketState(
 
 void MainWindow::updateStarDust(
     const msg::RocketVisualizationContainerMsg &visualizationContainerMsg) {
-  _starDustContainer.inFlightRespawn(visualizationContainerMsg.velocity);
+
+  _starDustContainerInForeground.update(
+      visualizationContainerMsg.velocity,
+      visualizationContainerMsg.rockePosition);
+
+  _starDustContainerInBackground.update(
+      visualizationContainerMsg.velocity,
+      visualizationContainerMsg.rockePosition);
 }
 
 //// SETUP HELPERS

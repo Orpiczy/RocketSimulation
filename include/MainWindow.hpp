@@ -30,8 +30,10 @@ private:
 
   spriteObjects::Rocket _rocket;
   spriteObjects::Moon _moon;
+  spriteObjects::StarDustContainer<spriteObjects::StarDust, 10>
+      _starDustContainerInForeground;
   spriteObjects::StarDustContainer<spriteObjects::StarDust, 40>
-      _starDustContainer;
+      _starDustContainerInBackground;
 
   void input();
   void update();

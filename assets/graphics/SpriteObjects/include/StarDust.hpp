@@ -13,14 +13,16 @@ public:
 
   Sprite getSprite() { return _starDustSprite; }
 
-  void
-  setPosition(const sf::Vector2f &starDustRelativeToRocketInCenterPosition);
-  float getDistance();
+  void setNewAbsoluteAndDisplayPosition(
+      const sf::Vector2f &starDustRelativeToRocketPosition,
+      const sf::Vector2f &rocketAbsolutePosition);
+  void updateDisplayPosition(const sf::Vector2f &rocketAbsolutePosition);
+  float getDistance(const sf::Vector2f &rocketAbsolutePosition);
 
 private:
   Texture _starDustTexture;
   Sprite _starDustSprite;
-  Vector2f _starDustPosition;
+  Vector2f _starDustAbsolutePosition;
 
   void setTextureAndSprite();
 

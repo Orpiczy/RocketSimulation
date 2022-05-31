@@ -155,8 +155,8 @@ void StatusWindow::updateDisplayedGaugeValues(
 void StatusWindow::setWindowSizeAndPosition(
     const Vector2i &mainWindowPosition) {
 
-  auto windowLength{common::SIDE_WINDOW_Y_SIZE};
-  auto windowHeight{common::SIDE_WINDOW_Y_SIZE};
+  auto windowLength{common::STATUS_WINDOW_X_SIZE};
+  auto windowHeight{common::STATUS_WINDOW_Y_SIZE};
 
   _window.create(VideoMode(windowLength, windowHeight), _windowName,
                  common::DEFAULT_WINDOW_STYLE);

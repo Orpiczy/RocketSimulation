@@ -8,7 +8,8 @@ StarDust::StarDust(bool isLogInfoEnable, bool isLogErrorEnable)
     : SimpleLogger(isLogInfoEnable, isLogErrorEnable) {
   setTextureAndSprite();
   // DEFAULTS LIKE THIS TO MAKE MOON SPAWN OUTSIDE SCREEN
-  setPosition({common::MAIN_WINDOW_X_SIZE * 2, common::MAIN_WINDOW_Y_SIZE * 2});
+  setNewAbsoluteAndDisplayPosition(
+      {common::MAIN_WINDOW_X_SIZE * 2, common::MAIN_WINDOW_Y_SIZE * 2}, {0, 0});
 }
 
 //// HELPERS
@@ -30,14 +31,31 @@ void StarDust::setTextureAndSprite() {
                _starDustSprite.getTexture()->getSize().y * 0.5));
 }
 
-void StarDust::setPosition(
-    const sf::Vector2f &starDustRelativeToRocketInCenterPosition) {
-  _starDustPosition.x = floor(common::MAIN_WINDOW_X_SIZE / 2 +
-                              starDustRelativeToRocketInCenterPosition.x);
-  _starDustPosition.y = floor(common::MAIN_WINDOW_Y_SIZE / 2 -
-                              starDustRelativeToRocketInCenterPosition.y);
+void StarDust::setNewAbsoluteAndDisplayPosition(
+    const sf::Vector2f &starDustRelativeToRocketPosition,
+    const sf::Vector2f &rocketAbsolutePosition) {
 
-  _starDustSprite.setPosition(_starDustPosition.x, _starDustPosition.y);
+  _starDustAbsolutePosition.x =
+      rocketAbsolutePosition.x + starDustRelativeToRocketPosition.x;
+  _starDustAbsolutePosition.y =
+      rocketAbsolutePosition.y + starDustRelativeToRocketPosition.y;
+
+  updateDisplayPosition(rocketAbsolutePosition);
+}
+
+void StarDust::updateDisplayPosition(
+    const sf::Vector2f &rocketAbsolutePosition) {
+  Vector2f relativePosition;
+  relativePosition.x = _starDustAbsolutePosition.x - rocketAbsolutePosition.x;
+  relativePosition.y = _starDustAbsolutePosition.y - rocketAbsolutePosition.y;
+
+  Vector2f displayPosition;
+  // MAIN WINDOW / 2 BO W CENTRUN USTYWUOWANA JEST RAKIETA
+  displayPosition.x =
+      floor(common::MAIN_WINDOW_X_SIZE / 2 + relativePosition.x);
+  displayPosition.y =
+      floor(common::MAIN_WINDOW_Y_SIZE / 2 - relativePosition.y);
+  _starDustSprite.setPosition(displayPosition);
 }
 
 std::string StarDust::getTextureFilename() {
@@ -50,9 +68,9 @@ std::string StarDust::getTextureFilename() {
   return textureFileName;
 }
 
-float StarDust::getDistance() {
-  float x = _starDustPosition.x - common::MAIN_WINDOW_X_SIZE / 2;
-  float y = common::MAIN_WINDOW_Y_SIZE / 2 - _starDustPosition.y;
+float StarDust::getDistance(const sf::Vector2f &rocketAbsolutePosition) {
+  float x = _starDustAbsolutePosition.x - rocketAbsolutePosition.x;
+  float y = _starDustAbsolutePosition.y - rocketAbsolutePosition.y;
   float distance = sqrt(x * x + y * y);
   return distance;
 }

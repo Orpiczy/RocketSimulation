@@ -16,20 +16,26 @@ void StarDustContainer<elementType, nrOfElements>::initialSpawn() {
   int nrOfElementsSpawnAtInit =
       floor(nrOfElements * _percentageOfObjectsSpawnAtInit);
 
+  sf::Vector2f rocketInitialAbsolutePosition{0, 0};
   for (int i = 0; i < nrOfElementsSpawnAtInit; i++) {
     float x = getRandomFloatInRange(-_radiusOfPasivity, _radiusOfPasivity);
     float ySpawnRadius = sqrt(_radiusOfPasivity * _radiusOfPasivity - x * x);
     float y = getRandomFloatInRange(-ySpawnRadius, ySpawnRadius);
-    _elementsContainer.at(i).setPosition({x, y});
+    _elementsContainer.at(i).setNewAbsoluteAndDisplayPosition(
+        {x, y}, rocketInitialAbsolutePosition);
   }
 }
 
 template <class elementType, int nrOfElements>
-void StarDustContainer<elementType, nrOfElements>::inFlightRespawn(
-    const sf::Vector2f &velocity) {
-  for (int i = 0; i < nrOfElements; i++) {
-    if (_elementsContainer.at(i).getDistance() > _radiusOfActivity) {
-      _elementsContainer.at(i).setPosition(getSpawnPoint(velocity));
+void StarDustContainer<elementType, nrOfElements>::update(
+    const sf::Vector2f &velocity, const sf::Vector2f &rocketAbsolutePosition) {
+
+  for (auto &starDust : _elementsContainer) {
+    if (starDust.getDistance(rocketAbsolutePosition) > _radiusOfActivity) {
+      starDust.setNewAbsoluteAndDisplayPosition(getSpawnPoint(velocity),
+                                                rocketAbsolutePosition);
+    } else {
+      starDust.updateDisplayPosition(rocketAbsolutePosition);
     }
   }
 }
@@ -145,4 +151,5 @@ int StarDustContainer<elementType, nrOfElements>::getRandomIntInRange(
 
 // TO DO
 template class StarDustContainer<StarDust, 40>;
+template class StarDustContainer<StarDust, 10>;
 } // namespace spriteObjects

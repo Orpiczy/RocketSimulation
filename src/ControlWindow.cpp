@@ -167,7 +167,7 @@ ControlWindow::getThrustersStateFromSwitchesState(
 void ControlWindow::setWindowSizeAndPosition(
     const Vector2i &mainWindowPosition) {
 
-  auto windowLength{common::CONTROL_WINDOW_Y_SIZE};
+  auto windowLength{common::CONTROL_WINDOW_X_SIZE};
   auto windowHeight{common::CONTROL_WINDOW_Y_SIZE};
 
   _window.create(VideoMode(windowLength, windowHeight), _windowName,

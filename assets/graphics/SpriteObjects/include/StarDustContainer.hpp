@@ -14,7 +14,8 @@ public:
   }
 
   void initialSpawn();
-  void inFlightRespawn(const sf::Vector2f &velocity);
+  void update(const sf::Vector2f &velocity,
+              const sf::Vector2f &rocketAbsolutePosition);
 
 protected:
   std::array<elementType, nrOfElements> _elementsContainer;
