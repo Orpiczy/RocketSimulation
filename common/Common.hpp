@@ -79,6 +79,9 @@ static const int ROCKET_Y_MAX_SIZE{
 static const int MOON_X_MAX_SIZE{ROCKET_Y_MAX_SIZE * 2};
 static const int MOON_Y_MAX_SIZE{ROCKET_Y_MAX_SIZE * 2};
 
+static const int STAR_DUST_X_MAX_SIZE(MOON_X_MAX_SIZE * 0.1);
+static const int STAR_DUST_Y_MAX_SIZE(MOON_Y_MAX_SIZE * 0.1);
+
 // SWITCH
 static const int SWITCH_X_MAX_SIZE{
     static_cast<int>(CONTROL_WINDOW_X_SIZE * 0.25)};

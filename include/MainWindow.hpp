@@ -2,6 +2,8 @@
 
 #include "../assets/graphics/SpriteObjects/include/Moon.hpp"
 #include "../assets/graphics/SpriteObjects/include/Rocket.hpp"
+#include "../assets/graphics/SpriteObjects/include/StarDust.hpp"
+#include "../assets/graphics/SpriteObjects/include/StarDustContainer.hpp"
 #include "../common/classes/SimpleLogger.hpp"
 #include "../common/interfaces/IWindow.hpp"
 #include <SFML/Graphics.hpp>
@@ -28,6 +30,8 @@ private:
 
   spriteObjects::Rocket _rocket;
   spriteObjects::Moon _moon;
+  spriteObjects::StarDustContainer<spriteObjects::StarDust, 40>
+      _starDustContainer;
 
   void input();
   void update();
@@ -46,6 +50,8 @@ private:
   void updateElementsState(
       const msg::RocketVisualizationContainerMsg &visualizationContainerMsg);
   void updateRocketState(
+      const msg::RocketVisualizationContainerMsg &visualizationContainerMsg);
+  void updateStarDust(
       const msg::RocketVisualizationContainerMsg &visualizationContainerMsg);
 
   //// SETUP HELPERS

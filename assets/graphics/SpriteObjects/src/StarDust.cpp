@@ -1,0 +1,59 @@
+#include "../include/StarDust.hpp"
+#include "../../../../common/Common.hpp"
+#include <random>
+
+namespace spriteObjects {
+
+StarDust::StarDust(bool isLogInfoEnable, bool isLogErrorEnable)
+    : SimpleLogger(isLogInfoEnable, isLogErrorEnable) {
+  setTextureAndSprite();
+  // DEFAULTS LIKE THIS TO MAKE MOON SPAWN OUTSIDE SCREEN
+  setPosition({common::MAIN_WINDOW_X_SIZE * 2, common::MAIN_WINDOW_Y_SIZE * 2});
+}
+
+//// HELPERS
+void StarDust::setTextureAndSprite() {
+  _starDustTexture.loadFromFile(common::IMG_ABS_PATH + getTextureFilename());
+  _starDustSprite.setTexture(_starDustTexture);
+
+  auto scaleX =
+      common::STAR_DUST_X_MAX_SIZE / _starDustSprite.getLocalBounds().width;
+  auto scaleY =
+      common::STAR_DUST_Y_MAX_SIZE / _starDustSprite.getLocalBounds().height;
+
+  auto scale = std::min(scaleX, scaleY);
+  _starDustSprite.setScale(scale, scale);
+
+  // origin ignoruje wszystkie tranformacje
+  _starDustSprite.setOrigin(
+      Vector2f(_starDustSprite.getTexture()->getSize().x * 0.5,
+               _starDustSprite.getTexture()->getSize().y * 0.5));
+}
+
+void StarDust::setPosition(
+    const sf::Vector2f &starDustRelativeToRocketInCenterPosition) {
+  _starDustPosition.x = floor(common::MAIN_WINDOW_X_SIZE / 2 +
+                              starDustRelativeToRocketInCenterPosition.x);
+  _starDustPosition.y = floor(common::MAIN_WINDOW_Y_SIZE / 2 -
+                              starDustRelativeToRocketInCenterPosition.y);
+
+  _starDustSprite.setPosition(_starDustPosition.x, _starDustPosition.y);
+}
+
+std::string StarDust::getTextureFilename() {
+  std::random_device dev;
+  std::mt19937 rng(dev());
+  std::uniform_int_distribution<std::mt19937::result_type> dist(1, 2);
+  std::string textureFileName = {"stone/stone"};
+  textureFileName += std::to_string(dist(rng));
+  textureFileName += ".png";
+  return textureFileName;
+}
+
+float StarDust::getDistance() {
+  float x = _starDustPosition.x - common::MAIN_WINDOW_X_SIZE / 2;
+  float y = common::MAIN_WINDOW_Y_SIZE / 2 - _starDustPosition.y;
+  float distance = sqrt(x * x + y * y);
+  return distance;
+}
+} // namespace spriteObjects

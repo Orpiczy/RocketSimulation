@@ -56,6 +56,9 @@ void MainWindow::draw() {
   _window.draw(_backgroundSprite);
   _window.draw(_rocket.getSprite());
   _window.draw(_moon.getSprite());
+  for (auto &starDust : _starDustContainer.getElements()) {
+    _window.draw(starDust.getSprite());
+  }
   _window.display();
 }
 
@@ -107,11 +110,12 @@ msg::RocketVisualizationContainerMsg MainWindow::getVisualizationData() {
 void MainWindow::updateElementsState(
     const msg::RocketVisualizationContainerMsg &visualizationContainerMsg) {
   updateRocketState(visualizationContainerMsg);
+  updateStarDust(visualizationContainerMsg);
+  updateStarDust(visualizationContainerMsg);
 }
 
 void MainWindow::updateRocketState(
     const msg::RocketVisualizationContainerMsg &visualizationContainerMsg) {
-
   // ROCKET
   _rocket.setAngle(visualizationContainerMsg.angle);
   _rocket.updateMainThrusterState(visualizationContainerMsg.mainThrusterState);
@@ -130,6 +134,11 @@ void MainWindow::updateRocketState(
   //  ss << "moon relative position x = " << moonRelativePosition.x
   //     << " y = " << moonRelativePosition.y;
   //  LG_INF(ss.str());
+}
+
+void MainWindow::updateStarDust(
+    const msg::RocketVisualizationContainerMsg &visualizationContainerMsg) {
+  _starDustContainer.inFlightRespawn(visualizationContainerMsg.velocity);
 }
 
 //// SETUP HELPERS
