@@ -1,3 +1,7 @@
+// Primary
+1. Add process to control window that publish updates
+
+// Secondary 
 1. Dodaj priorytety wątkom i procesom
 2. Dodaj oblsługe printowania ERNO I bledow w logerze
 3. Przemysl jeszcze raz sidethrustery i jak to tam rozwiazac
