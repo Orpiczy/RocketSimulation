@@ -1,5 +1,5 @@
 # RocketSimulation 🚀
-Multithreading, multiprocessing and multi window C++ application that uses sfml library in order to bring space flight closer people and functions as vaulable example of multithreading, multiprocessing and multi window app for any one that seeks template like this.
+Multithreading, multiprocessing and multi window C++ application that uses sfml library in order to bring space flight closer to people and functions as vaulable example of multithreading, multiprocessing and multi window app for any one that seeks template like this.
 
 ## Installation
 Additionaly to standard cpp language installation, application requires sfml library to run visualisation. It can be downloaded simply by running undermentioned command in bash terminal
