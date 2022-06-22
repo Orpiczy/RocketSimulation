@@ -6,11 +6,17 @@ enable_testing()
 
 file(GLOB MAIN_FILES CONFIGURE_DEPENDS "include/*.hpp" "src/*.cpp")
 file(GLOB COMMON_FILES CONFIGURE_DEPENDS "common/*.hpp" )
+file(GLOB COMMON_INTERFACES CONFIGURE_DEPENDS "common/interfaces/*.hpp" )
+file(GLOB COMMON_TEMPLATES CONFIGURE_DEPENDS "common/templates/*.hpp")
+file(GLOB COMMON_CLASSES CONFIGURE_DEPENDS "common/classes/*.hpp" "common/classes/*.cpp")
 file(GLOB SPRITE_OBJ_FILES CONFIGURE_DEPENDS "assets/graphics/SpriteObjects/include/*.hpp" "assets/graphics/SpriteObjects/src/*.cpp")
 
 add_executable(RocketSimulation main.cpp
     ${MAIN_FILES}
     ${COMMON_FILES}
+    ${COMMON_CLASSES}
+    ${COMMON_INTERFACES}
+    ${COMMON_TEMPLATES}
     ${SPRITE_OBJ_FILES}
 )
 

@@ -1,0 +1,22 @@
+// Primary
+1. Add process to control window that publish updates
+
+// Secondary 
+1. Dodaj priorytety wątkom i procesom
+2. Dodaj oblsługe printowania ERNO I bledow w logerze
+3. Przemysl jeszcze raz sidethrustery i jak to tam rozwiazac
+4. Zmodyfikuj priorytety wiadomosci w kolejkach
+5. Dodaj wage msg
+6. Dopytaj o co chodzi z nazwa /rocket_visualization_queue, czemu juz jest i kto na niej publikuje
+7. Czemu aby zmienic atrybuty kolejki to musze resetowac komputer - sprawdz poprawnosc zamykania kolejek
+8. Dlaczego uklad wspolrzednych okien jest taki kopniety y w dol rosnie
+9. Publikowanie cmd w Control Window sie zcina czasem
+10. Przerzuc funkcje runInParallel do interfejsu IWindow, zastanow sie czy na pewno jest to piekielnie konieczne
+11. REFACTOR 
+12. START PO ENTERZE DOPIERO
+13.
+
+// DO DOWIEDZENIA SIE
+1. Jak tylko dodajesz informacje do kolejki to po pewnym czasie sie zatnie i kicha 
+2. READ https://stackoverflow.com/questions/8752837/undefined-reference-to-template-class-constructor - problem z StarDustContainer
+3. 

@@ -30,7 +30,7 @@ public:
   void alignInRow(sf::Vector2f referencePoint, sf::Vector2f size, float marginX,
                   float marginY, bool keepProportion) override {}
 
-  std::array<bool, nrOfElements> getSwitchesState() {
+  std::array<bool, nrOfElements> getSwitchesState() const{
     std::array<bool, nrOfElements> switchesState{0};
     for (std::size_t i = 0; i != this->_elementsContainer.size(); i++) {
       //"this" wymagane bo probuje za szybko zasiegnac,

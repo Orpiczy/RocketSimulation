@@ -1,20 +1,29 @@
 #include "../include/ControlWindow.hpp"
 #include "../common/Common.hpp"
+#include "../common/CommunicationInfo.hpp"
+#include "../common/MessageTypes.hpp"
+#include <SFML/Graphics.hpp>
+#include <errno.h>
+#include <string.h>
 
-ControlWindow::ControlWindow(const Vector2i &mainWindowPosition) {
+ControlWindow::ControlWindow(const Vector2i &mainWindowPosition,
+                             bool isLogInfoEnable, bool isLogErrorEnable)
+    : SimpleLogger(isLogInfoEnable, isLogErrorEnable) {
   setWindowSizeAndPosition(mainWindowPosition);
+  updateDescription();
   setTexturesAndSprites();
   setUpElements();
+  openQueues();
+  LG_INF("CONTROL WINDOW - CREATED");
 }
 
-void ControlWindow::start() {
+ControlWindow::~ControlWindow() { closeQueues(); }
 
-  Clock clock;
+void ControlWindow::start() {
+  LG_INF("CONTROL WINDOW - LOOP HAS STARTED");
   while (_window.isOpen()) {
-    Time dt = clock.restart();
-    float dtAsSeconds = dt.asSeconds();
     input();
-    update(dtAsSeconds);
+    update();
     draw();
     sf::Event event;
     _window.pollEvent(event);
@@ -24,18 +33,48 @@ void ControlWindow::start() {
 void ControlWindow::input() {
 
   if (Keyboard::isKeyPressed(Keyboard::Escape)) {
+    LG_INF("CONTROL WINDOW - ESC WAS PRESSED, CLOSING WINDOW, EXITING LOOP");
     _window.close();
   }
 
   if (sf::Mouse::isButtonPressed(sf::Mouse::Left)) {
+    // LG_INF("CONTROL WINDOW - LMB WAS PRESSED - CHECKING POSITION AND CLICKING
+    // "
+    //        "SWITCH IF NEEDED");
     auto mousePosition = sf::Mouse::getPosition(
         _window); // Mouse position relative to the window
     auto globalMousePosition = _window.mapPixelToCoords(mousePosition);
-    _thrusterSwitches.click(globalMousePosition);
+    int clickecElementId = _thrusterSwitches.click(globalMousePosition);
+    // LG_INF("clickecElementId = ", clickecElementId);
+
+    // update - tak aby dwa side thrustery nigdy nie byly wlaczone razem
+
+    switch (clickecElementId) {
+    case 0:
+
+      if (_thrusterSwitches.getElements().at(0).getState()) {
+        _thrusterSwitches.getElements().at(2).setOff();
+      }
+      break;
+
+    case 2:
+
+      if (_thrusterSwitches.getElements().at(2).getState()) {
+        _thrusterSwitches.getElements().at(0).setOff();
+      }
+      break;
+
+    default:
+      break;
+    }
+
+    if (clickecElementId != -1) {
+      publishThrustersControl();
+    }
   }
 }
 
-void ControlWindow::update(float dtAsSeconds) {}
+void ControlWindow::update() {}
 
 void ControlWindow::draw() {
   _window.clear(Color::White);
@@ -52,12 +91,83 @@ void ControlWindow::draw() {
   _window.display();
 }
 
+[[deprecated]] std::thread ControlWindow::getAndRunInputProcessingThread() {
+
+  auto runningInputProcessingInLoopLambda = [this]() {
+    LG_INF("CONTROL WINDOW - ENTERING LOOP - InputProcessing lambda in "
+           "parallel thread");
+    while (_window.isOpen()) {
+      input();
+    }
+    LG_INF("CONTROL WINDOW - EXITING LOOP - InputProcessing lambda in parallel "
+           "thread");
+  };
+  std::thread inputProcessingThread(runningInputProcessingInLoopLambda);
+  return inputProcessingThread;
+}
+
+//// COMMUNICATION SETUP
+void ControlWindow::openQueues() {
+  if ((comm::thrustersControlQueue =
+           mq_open(comm::THRUSTERS_CONTROL_QUEUE_FILE, O_CREAT | O_RDWR, 0644,
+                   &comm::thrustersControlQueueAttr)) == -1) {
+    printf(" >> ERROR - Control Window - FAILED TO OPEN THE QUEUE %s\n",
+           strerror(errno));
+    return;
+  }
+}
+void ControlWindow::closeQueues() { mq_close(comm::thrustersControlQueue); }
+
+//// COMMUNICATION
+void ControlWindow::publishThrustersControl() {
+
+  msg::ThrustersStateMsg thrusterStateMsg;
+  std::tie(thrusterStateMsg.mainThrusterState,
+           thrusterStateMsg.sideThrusterState) = getThrustersState();
+
+  if (mq_send(comm::thrustersControlQueue, (const char *)&thrusterStateMsg,
+              sizeof(msg::ThrustersStateMsg), 0) == -1) {
+    LG_ERR("Control Window - FAILED TO SEND CONTROL - " +
+           std::string(strerror(errno)));
+  } else {
+    LG_INF("CONTROL WINDOW - SENT THRUSTER CONTROL UPDATE");
+  }
+}
+////GETERS
+std::tuple<common::MainThrusterState, common::SideThrusterState>
+ControlWindow::getThrustersState() const {
+
+  const std::array<bool, _nrOfElements> switchesState =
+      _thrusterSwitches.getSwitchesState();
+
+  return getThrustersStateFromSwitchesState(switchesState);
+}
+
+std::tuple<common::MainThrusterState, common::SideThrusterState>
+ControlWindow::getThrustersStateFromSwitchesState(
+    const std::array<bool, _nrOfElements> switchesState) const {
+  // MAIN
+  auto mainThrusterState = switchesState.at(1)
+                               ? common::MainThrusterState::TURN_ON
+                               : common::MainThrusterState::TURN_OFF;
+  // LEFT
+  auto leftThrusterState = switchesState.at(0)
+                               ? common::SideThrusterState::LEFT_ON
+                               : common::SideThrusterState::TURN_OFF;
+
+  // RIGHT
+  auto sideThrusterState = switchesState.at(2)
+                               ? common::SideThrusterState::RIGHT_ON
+                               : leftThrusterState;
+
+  return {mainThrusterState, sideThrusterState};
+}
 //// HELPERS
 
 void ControlWindow::setWindowSizeAndPosition(
     const Vector2i &mainWindowPosition) {
 
-  auto windowLength{common::CONTROL_WINDOW_Y_SIZE};
+  auto windowLength{common::CONTROL_WINDOW_X_SIZE};
   auto windowHeight{common::CONTROL_WINDOW_Y_SIZE};
 
   _window.create(VideoMode(windowLength, windowHeight), _windowName,
@@ -102,4 +212,11 @@ void ControlWindow::setUpElements() {
                       common::COMMAND_WINDOW_OBJECTS_X_MARGIN,
                       common::COMMAND_WINDOW_OBJECTS_Y_MARGIN,
                       LayoutType::columnLayout);
+}
+
+void ControlWindow::updateDescription() {
+  auto &rawDescriptions = _descriptions.getElements();
+  for (std::size_t i = 0; i < rawDescriptions.size(); i++) {
+    rawDescriptions.at(i).setString(_descriptionLookUpTable.at(i));
+  }
 }

@@ -1,15 +1,22 @@
 #pragma once
+#include "../common/classes/SimpleLogger.hpp"
 #include "../common/interfaces/IWindow.hpp"
 #include "../common/templates/TextContainer.hpp"
-
 #include <SFML/Graphics.hpp>
+
+// comms
+#include "../common/MessageTypes.hpp"
+
+#include <thread>
 
 using namespace sf;
 
-class StatusWindow : public IWindow {
+class StatusWindow : public IWindow, public SimpleLogger {
 public:
-  StatusWindow() : StatusWindow({0, 0}){};
-  StatusWindow(const Vector2i &mainWindowPosition);
+  StatusWindow(const Vector2i &mainWindowPosition = {0, 0},
+               bool isLogInfoEnable = false, bool isLogErrorEnable = true);
+
+  ~StatusWindow();
   void start();
 
 private:
@@ -24,8 +31,10 @@ private:
                                                          "Angle"};
 
   void input();
-  void update(float dtAsSeconds);
+  void update();
   void draw();
+
+  std::thread getAndRunUpdatingDataThread();
 
   // HELPERS
   void setWindowSizeAndPosition(const Vector2i &mainWindowPosition);
@@ -33,4 +42,14 @@ private:
   void setUpElements();
   void updateDescription();
   void updateDisplayedGaugeValues(const std::vector<int> &values);
+
+  // COMMUNICATION SETUP
+  void openQueues();
+  void closeQueues();
+
+  // COMMUNICATION
+  msg::RocketStatusMsg getStatusData();
+
+  // DATA MANAGMENT
+  void updateElementsState(const msg::RocketStatusMsg &rocketStatusMsg);
 };

@@ -1,13 +1,21 @@
 #pragma once
+#include "../common/classes/SimpleLogger.hpp"
 #include "../common/interfaces/IWindow.hpp"
 #include <SFML/Graphics.hpp>
 
+// comms
+#include "../common/MessageTypes.hpp"
+
+// thread
+#include <thread>
+
 using namespace sf;
 
-class RadarWindow : public IWindow {
+class RadarWindow : public IWindow, public SimpleLogger {
 public:
-  RadarWindow() : RadarWindow({0, 0}){};
-  RadarWindow(const Vector2i &mainWindowPosition);
+  RadarWindow(const Vector2i &mainWindowPosition = {0, 0},
+              bool isLogInfoEnable = true, bool isLogErrorEnable = true);
+  ~RadarWindow();
 
   void start();
 
@@ -29,14 +37,31 @@ private:
   float _rocketIconScale = 0.065;
   float _maxRadarSpriteDistane{0.0};
 
-  const char *_windowName = "Radar Window";
+  const char *_windowName{"Radar Window"};
+  const int _radarMaxRange{10'000}; // meters
+  float _scaleRealToRadar{0};
+  float _radarMaxRangeInScale{0};
 
   void input();
-  void update(float dtAsSeconds);
+  void update();
   void draw();
 
-  //// HELPERS
+  std::thread getAndRunUpdatingDataThread();
+
+  // COMMUNICATION SETUP
+  void openQueues();
+  void closeQueues();
+
+  // HELPERS
   void setWindowSizeAndPosition(const Vector2i &mainWindowPosition);
   void setMaxRadarSpriteDistane();
   void setTexturesAndSprites();
+  void setScaleAndRange();
+
+  // COMMUNICATION
+  msg::ObjectsPositionMsg getPositionData();
+
+  // DATA MANAGMENT
+  void updateElementsState(const msg::ObjectsPositionMsg &objectsPositionMsg);
+  void updateRadar(const msg::ObjectsPositionMsg &objectsPositionMsg);
 };

@@ -1,19 +1,155 @@
 #include "../include/RadarWindow.hpp"
 #include "../common/Common.hpp"
 
-RadarWindow::RadarWindow(const Vector2i &mainWindowPosition) {
+// comms
+#include "../common/CommunicationInfo.hpp"
+#include "../common/MessageTypes.hpp"
+#include <mqueue.h>
+#include <string.h>
+
+RadarWindow::RadarWindow(const Vector2i &mainWindowPosition,
+                         bool isLogInfoEnable, bool isLogErrorEnable)
+    : SimpleLogger(isLogInfoEnable, isLogErrorEnable) {
   setWindowSizeAndPosition(mainWindowPosition);
   setMaxRadarSpriteDistane();
   setTexturesAndSprites();
+  setScaleAndRange();
+  openQueues();
+  LG_INF("RADAR WINDOW - CREATED");
 }
+
+RadarWindow::~RadarWindow() { closeQueues(); }
+
+void RadarWindow::start() {
+  LG_INF("RADAR WINDOW - LOOP HAS STARTED");
+
+  // jak wyjdzie ze scopa to po prostu go zterminuje
+  auto updatingDataInBackgroundThread = getAndRunUpdatingDataThread();
+
+  while (_window.isOpen()) {
+    input();
+    draw();
+    sf::Event event;
+    _window.pollEvent(event);
+  }
+}
+
+void RadarWindow::input() {
+
+  if (Keyboard::isKeyPressed(Keyboard::Escape)) {
+    LG_INF("RADAR WINDOW - ESC WAS PRESSED, CLOSING WINDOW, EXITING LOOP");
+    _window.close();
+  }
+}
+
+void RadarWindow::update() {
+  auto newData{getPositionData()};
+  updateElementsState(newData);
+}
+
+void RadarWindow::draw() {
+  _window.clear(Color::White);
+  _window.draw(_backgroundSprite);
+  _window.draw(_rocketSprite);
+  _window.draw(_moonSprite);
+  _window.display();
+}
+
+std::thread RadarWindow::getAndRunUpdatingDataThread() {
+  auto runningUpdateInLoopLambda = [this]() {
+    LG_INF("RADAR WINDOW - ENTERING LOOP - UpdatingData lambda in parallel "
+           "thread");
+    while (_window.isOpen()) {
+      update();
+    }
+    LG_INF(
+        "RADAR WINDOW - EXITING LOOP - UpdatingData lambda in parallel thread");
+  };
+  std::thread updatingThread(runningUpdateInLoopLambda);
+  return updatingThread;
+}
+
+//// COMMUNICATION SETUP
+void RadarWindow::openQueues() {
+  if ((comm::objectsPositionQueue =
+           mq_open(comm::OBJECTS_POSITION_QUEUE_FILE, O_CREAT | O_RDWR, 0644,
+                   &comm::objectsPositionQueueAttr)) == -1) {
+    printf(" >> ERROR - RADAR WINDOW  - FAILED TO OPEN POSITION QUEUE %s\n",
+           strerror(errno));
+    return;
+  }
+}
+void RadarWindow::closeQueues() {
+  if (mq_close(comm::objectsPositionQueue) == -1) {
+    printf(" >> ERROR - RADAR WINDOW - FAILED TO CLOSE POSITION QUEUE %s\n",
+           strerror(errno));
+  }
+}
+
+//// COMMUNICATION
+msg::ObjectsPositionMsg RadarWindow::getPositionData() {
+  msg::ObjectsPositionMsg objectPositionMsg;
+  if (mq_receive(comm::objectsPositionQueue, (char *)&objectPositionMsg,
+                 sizeof(msg::ObjectsPositionMsg), NULL) == -1) {
+
+    LG_ERR("RADAR WINDOW - FAILED TO RECEIVE DATA - " +
+           std::string(strerror(errno)));
+  } else {
+    // LG_INF("RADAR WINDOW - RECEIVED UPDATE OF DATA");
+  }
+  return objectPositionMsg;
+}
+
+//// DATA MANAGMENT
+void RadarWindow::updateElementsState(
+    const msg::ObjectsPositionMsg &objectsPositionMsg) {
+  updateRadar(objectsPositionMsg);
+}
+
+void RadarWindow::updateRadar(
+    const msg::ObjectsPositionMsg &objectsPositionMsg) {
+
+  float moonPositionInRadarScaleX = (objectsPositionMsg.destinationPosition.x -
+                                     objectsPositionMsg.rockePosition.x) *
+                                    _scaleRealToRadar;
+
+  float moonPositionInRadarScaleY = (objectsPositionMsg.destinationPosition.y -
+                                     objectsPositionMsg.rockePosition.y) *
+                                    _scaleRealToRadar;
+
+  // coefficient that makes moon fit in a circle of a radar if moon is too far()
+  float R = std::sqrt(moonPositionInRadarScaleX * moonPositionInRadarScaleX +
+                      moonPositionInRadarScaleY * moonPositionInRadarScaleY);
+
+  float alfa{1}; // only when its too far
+  if (R > _radarMaxRangeInScale) {
+    alfa = _radarMaxRangeInScale / R;
+  }
+
+  // this is basically relative to the center
+  float moonScaledPositionInRadarScaleX = moonPositionInRadarScaleX * alfa;
+  float moonScaledPositionInRadarScaleY = moonPositionInRadarScaleY * alfa;
+
+  // now we have to move to window coord
+  float moonWindowPositionX =
+      _window.getSize().x / 2 + moonScaledPositionInRadarScaleX;
+  float moonWindowPositionY =
+      _window.getSize().y / 2 -
+      moonScaledPositionInRadarScaleY; // we have minus because moving down is
+                                       // incrasing y for some crazy reason
+
+  _moonSprite.setPosition(moonWindowPositionX, moonWindowPositionY);
+}
+
+//// HELPERS
 
 void RadarWindow::setMaxRadarSpriteDistane() {
   _maxRadarSpriteDistane = _window.getSize().y / 1;
 }
 void RadarWindow::setWindowSizeAndPosition(const Vector2i &mainWindowPosition) {
 
-  auto windowLength{common::SIDE_WINDOW_Y_SIZE};
-  auto windowHeight{common::SIDE_WINDOW_Y_SIZE};
+  auto windowLength{common::RADAR_WINDOW_X_SIZE};
+  auto windowHeight{common::RADAR_WINDOW_Y_SIZE};
 
   _window.create(VideoMode(windowLength, windowHeight), _windowName,
                  common::DEFAULT_WINDOW_STYLE);
@@ -56,35 +192,15 @@ void RadarWindow::setTexturesAndSprites() {
   _moonSprite.setPosition(_window.getSize().x / 2, moonIconRealYSize / 2);
 }
 
-void RadarWindow::start() {
+void RadarWindow::setScaleAndRange() {
+  float moonIconRealXSize =
+      _moonSprite.getTexture()->getSize().x * _moonSprite.getScale().x;
+  float moonIconRealYSize =
+      _moonSprite.getTexture()->getSize().y * _moonSprite.getScale().y;
 
-  Clock clock;
-  while (_window.isOpen()) {
-    Time dt = clock.restart();
-    float dtAsSeconds = dt.asSeconds();
-    input();
-    update(dtAsSeconds);
-    draw();
-    sf::Event event;
-    _window.pollEvent(event);
-  }
+  _radarMaxRangeInScale =
+      _window.getSize().y / 2 - std::max(moonIconRealXSize, moonIconRealYSize);
+
+  // I want moon to fit on a screen
+  _scaleRealToRadar = _radarMaxRangeInScale / _radarMaxRange;
 }
-
-void RadarWindow::input() {
-
-  if (Keyboard::isKeyPressed(Keyboard::Escape)) {
-    _window.close();
-  }
-}
-
-void RadarWindow::update(float dtAsSeconds) {}
-
-void RadarWindow::draw() {
-  _window.clear(Color::White);
-  _window.draw(_backgroundSprite);
-  _window.draw(_rocketSprite);
-  _window.draw(_moonSprite);
-  _window.display();
-}
-
-//#00f434
