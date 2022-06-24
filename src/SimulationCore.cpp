@@ -1,10 +1,10 @@
 #include "../include/SimulationCore.hpp"
 #include "../common/classes/LogPublisher.hpp"
+#include "../common/classes/SchedulingManagment.hpp"
 #include "../include/ControlWindow.hpp"
 #include "../include/MainWindow.hpp"
 #include "../include/RadarWindow.hpp"
 #include "../include/StatusWindow.hpp"
-
 // multiprocess
 #include <sys/wait.h>
 #include <unistd.h>
@@ -17,6 +17,8 @@
 
 // debug
 #include <sstream>
+
+using SchedulingPriority = schedulingManagment::SchedulingPriority;
 
 SimulationCore::SimulationCore(bool isLogInfoEnable, bool isLogErrorEnable)
     : SimpleLogger(isLogInfoEnable, isLogErrorEnable) {
@@ -112,6 +114,9 @@ void SimulationCore::startSimulation() {
 std::thread SimulationCore::getAndRunSendingDataInLoopThread() {
 
   auto sendingDataInLoopLambda = [this]() {
+    schedulingManagment::setSchedulingPolicyAndPriority(
+        SCHED_FIFO, SchedulingPriority::min);
+
     LG_INF("SIMULATION CORE - ENTERING LOOP - sending data lambda in "
            "parallel thread");
 
@@ -150,6 +155,9 @@ std::thread SimulationCore::getAndRunSendingDataInLoopThread() {
 
 std::thread SimulationCore::getAndRunUpdatingControlInLoopThread() {
   auto updatingDataInLoopLambda = [this]() {
+    schedulingManagment::setSchedulingPolicyAndPriority(
+        SCHED_FIFO, SchedulingPriority::max);
+
     LG_INF("SIMULATION CORE - ENTERING LOOP - receiving control data "
            "lambda in "
            "parallel thread");
@@ -167,6 +175,9 @@ std::thread SimulationCore::getAndRunUpdatingControlInLoopThread() {
 }
 std::thread SimulationCore::getAndRunRunningSimulationInLoopThread() {
   auto runningSimulationInLoopLambda = [this]() {
+    schedulingManagment::setSchedulingPolicyAndPriority(
+        SCHED_FIFO, SchedulingPriority::medium);
+
     LG_INF("SIMULATION CORE - ENTERING LOOP - simulation running lambda in "
            "parallel thread");
     Clock clock;
