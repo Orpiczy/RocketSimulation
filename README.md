@@ -24,18 +24,18 @@ Code executes in six concurrent processes and many of them starts additional thr
   * updatingControlThread
 2. **Main Window Process** - displays rocket and environment around it
   * updatingDataInBackgroundThread
-  * refreshingWindowContentThread
+  * refreshingWindowContentThread*
 3. **Control Window Process** - displays available rocket control and sends all modification to simulation core
-  * publishingUpdateOnThrustersControlThread
-  * refreshingWindowContentThread
+  * publishingUpdateOnThrustersControl and refreshingWindowContent Thread*
 4. **Radar Window Process** - displays radar info
   * updatingDataInBackgroundThread
-  * refreshingWindowContentThread
+  * refreshingWindowContentThread*
 5. **Status Window Process** - displays rocket status info
   * updatingDataInBackgroundThread
-  * refreshingWindowContentThread
+  * refreshingWindowContentThread*
 6. **Log Publisher/Saver Process** - serves as a standalone log collector and publisher for all the classes in the project (required from realtime requirements point of view)
 
+*run as main thread -> additional threads weren't seen as profitable in these cases
 **Communication between components**
 
 Most of the IPC is realizes via message queues, however there is one exception to that rule. All classes derived from SimpleLogger class which communicates via FIFO with class functioning as log collector and publisher.

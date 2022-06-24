@@ -25,6 +25,7 @@ private:
   //     .position = {commonConsts::MOON_DISTANCE * (-0.2) / 100000,
   //                  commonConsts::MOON_DISTANCE *(0.8) / 100000}};
   common::DestinationParams _destinationParams{.position = {0, 5000}};
+  pthread_rwlock_t _simDataLock;
 
   // CORE
   std::thread getAndRunRunningSimulationInLoopThread();

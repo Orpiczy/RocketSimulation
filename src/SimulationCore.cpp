@@ -20,6 +20,7 @@
 
 SimulationCore::SimulationCore(bool isLogInfoEnable, bool isLogErrorEnable)
     : SimpleLogger(isLogInfoEnable, isLogErrorEnable) {
+  pthread_rwlock_init(&_simDataLock, NULL);
   openQueues();
 }
 
@@ -192,6 +193,8 @@ void SimulationCore::updateLinearMotionPartOfSystemState(
 
   Vector2f mainEngineForce{0, 0};
 
+  pthread_rwlock_wrlock(&_simDataLock);
+
   if (_rocketParams.mainThrusterState == MainThrusterState::TURN_ON) {
     mainEngineForce.x =
         cos(getAngleInRadiansInClassicCoordinateSystem(_rocketParams.angle)) *
@@ -233,6 +236,8 @@ void SimulationCore::updateLinearMotionPartOfSystemState(
   _rocketParams.position.y =
       _rocketParams.position.y + (_rocketParams.velocity.y * dtAsSeconds) +
       (0.5 * _rocketParams.acceleration.y * dtAsSeconds * dtAsSeconds);
+
+  pthread_rwlock_unlock(&_simDataLock);
 }
 
 float SimulationCore::getAngleInRadiansInClassicCoordinateSystem(
@@ -244,9 +249,10 @@ float SimulationCore::getAngleInRadiansInClassicCoordinateSystem(
 
 void SimulationCore::updateRotationalMotionPartOfSystemState(
     const float &dtAsSeconds) {
+
+  pthread_rwlock_wrlock(&_simDataLock);
   int sideThrusterForce{0};
   switch (_rocketParams.sideThrusterState) {
-
   case SideThrusterState::LEFT_ON:
     sideThrusterForce = -commonConsts::SIDE_THRUSTERS_THRUST;
     break;
@@ -288,6 +294,8 @@ void SimulationCore::updateRotationalMotionPartOfSystemState(
   _rocketParams.angle =
       _rocketParams.angle + (_rocketParams.angularVelocity * dtAsSeconds) +
       (0.5 * _rocketParams.angularAcceleration * dtAsSeconds * dtAsSeconds);
+
+  pthread_rwlock_unlock(&_simDataLock);
 }
 
 //// COMMUNICATION SETUP
@@ -358,6 +366,8 @@ void SimulationCore::closeQueues() {
 void SimulationCore::sendVisualizationData() {
   // _rocketParams.angle = _rocketParams.angle + 0.36;
   // _rocketParams.angle = 90;
+
+  pthread_rwlock_rdlock(&_simDataLock);
   msg::RocketVisualizationContainerMsg visualizationContainerMsg{
       .velocity = _rocketParams.velocity,
       .angle = _rocketParams.angle,
@@ -365,6 +375,7 @@ void SimulationCore::sendVisualizationData() {
       .sideThrusterState = _rocketParams.sideThrusterState,
       .destinationPosition = _destinationParams.position,
       .rockePosition = _rocketParams.position};
+  pthread_rwlock_unlock(&_simDataLock);
 
   if (mq_send(comm::rocketVisualizationQueue,
               (char *)&visualizationContainerMsg,
@@ -388,8 +399,10 @@ void SimulationCore::updateCurrentThrustersControl() {
     // LogReceivedControl(thrusterStateMsg);
   }
 
+  pthread_rwlock_wrlock(&_simDataLock);
   _rocketParams.mainThrusterState = thrusterStateMsg.mainThrusterState;
   _rocketParams.sideThrusterState = thrusterStateMsg.sideThrusterState;
+  pthread_rwlock_unlock(&_simDataLock);
 }
 
 void SimulationCore::sendObjectsPosition() {
@@ -398,9 +411,13 @@ void SimulationCore::sendObjectsPosition() {
   // _rocketParams.position.x = _rocketParams.position.x + 1000;
   // _rocketParams.position.y = _rocketParams.position.y + 1000;
 
+  pthread_rwlock_rdlock(&_simDataLock);
+
   msg::ObjectsPositionMsg objectsPositionMsg{
       .destinationPosition = _destinationParams.position,
       .rockePosition = _rocketParams.position};
+
+  pthread_rwlock_unlock(&_simDataLock);
 
   if (mq_send(comm::objectsPositionQueue, (char *)&objectsPositionMsg,
               sizeof(msg::ObjectsPositionMsg), 0) == -1) {
@@ -412,11 +429,13 @@ void SimulationCore::sendObjectsPosition() {
 }
 
 void SimulationCore::sendRocketStatus() {
-  _rocketParams.oxygen = _rocketParams.oxygen + 36;
+
+  pthread_rwlock_rdlock(&_simDataLock);
   msg::RocketStatusMsg rocketStatusMsg{.oxygen = _rocketParams.oxygen,
                                        .fuel = _rocketParams.fuel,
                                        .velocity = _rocketParams.velocity,
                                        .angle = _rocketParams.angle};
+  pthread_rwlock_unlock(&_simDataLock);
 
   if (mq_send(comm::rocketStatusQueue, (char *)&rocketStatusMsg,
               sizeof(msg::RocketStatusMsg), 0) == -1) {
