@@ -26,7 +26,7 @@ SimulationCore::SimulationCore(bool isLogInfoEnable, bool isLogErrorEnable)
     : SimpleLogger(isLogInfoEnable, isLogErrorEnable) {
 
   schedulingManagment::setAndLogSchedulingPolicyAndPriority(
-      "SimulationCore::SimulationCore", SCHED_FIFO,
+      "SimulationCore::SimulationCore", schedulingInfo::queueDefaultType,
       schedulingInfo::initialPriority);
 
   pthread_rwlock_init(&_simDataLock, NULL);
@@ -121,8 +121,8 @@ void SimulationCore::startSimulation() {
 std::thread SimulationCore::getAndRunRunningSimulationInLoopThread() {
   auto runningSimulationInLoopLambda = [this]() {
     schedulingManagment::setAndLogSchedulingPolicyAndPriority(
-        "SimulationCore::getAndRunRunningSimulationInLoopThread()", SCHED_FIFO,
-        schedulingInfo::simulationPriority);
+        "SimulationCore::getAndRunRunningSimulationInLoopThread()",
+        schedulingInfo::queueDefaultType, schedulingInfo::simulationPriority);
 
     Clock clock;
     while (true) {
@@ -142,7 +142,8 @@ std::thread SimulationCore::getAndRunSendingDataInLoopThread() {
 
   auto sendingDataInLoopLambda = [this]() {
     schedulingManagment::setAndLogSchedulingPolicyAndPriority(
-        "SimulationCore::getAndRunSendingDataInLoopThread", SCHED_FIFO,
+        "SimulationCore::getAndRunSendingDataInLoopThread",
+        schedulingInfo::queueDefaultType,
         schedulingInfo::sendingDataFromCorePriority);
 
     Clock sendingVisualizationTimer;
@@ -181,7 +182,8 @@ std::thread SimulationCore::getAndRunSendingDataInLoopThread() {
 std::thread SimulationCore::getAndRunUpdatingControlInLoopThread() {
   auto updatingDataInLoopLambda = [this]() {
     schedulingManagment::setAndLogSchedulingPolicyAndPriority(
-        "SimulationCore::getAndRunUpdatingControlInLoopThread()", SCHED_FIFO,
+        "SimulationCore::getAndRunUpdatingControlInLoopThread()",
+        schedulingInfo::queueDefaultType,
         schedulingInfo::updatingCmdInCorePriority);
 
     LG_INF("SIMULATION CORE - ENTERING LOOP - receiving control data "
@@ -203,6 +205,7 @@ std::thread SimulationCore::getAndRunUpdatingControlInLoopThread() {
 void SimulationCore::updateSystemState(const float &dtAsSeconds) {
   updateLinearMotionPartOfSystemState(dtAsSeconds);
   updateRotationalMotionPartOfSystemState(dtAsSeconds);
+  updateIndependentVariables(dtAsSeconds);
 }
 
 void SimulationCore::updateLinearMotionPartOfSystemState(
@@ -212,10 +215,14 @@ void SimulationCore::updateLinearMotionPartOfSystemState(
 
   pthread_rwlock_wrlock(&_simDataLock);
 
+  if (_rocketParams.fuel == 0) {
+    _rocketParams.mainThrusterState = MainThrusterState::TURN_OFF;
+  }
+
   if (_rocketParams.mainThrusterState == MainThrusterState::TURN_ON) {
     mainEngineForce.x =
         cos(getAngleInRadiansInClassicCoordinateSystem(_rocketParams.angle)) *
-        commonConsts::MAIN_ENGINE_THRUST; // plus 90 due to rotate coordinate
+        commonConsts::MAIN_ENGINE_THRUST; // plus 90 due to rotated coordinate
                                           // system
     mainEngineForce.y =
         sin(getAngleInRadiansInClassicCoordinateSystem(_rocketParams.angle)) *
@@ -268,6 +275,10 @@ void SimulationCore::updateRotationalMotionPartOfSystemState(
     const float &dtAsSeconds) {
 
   pthread_rwlock_wrlock(&_simDataLock);
+  if (_rocketParams.fuel == 0) {
+    _rocketParams.sideThrusterState = SideThrusterState::TURN_OFF;
+  }
+
   int sideThrusterForce{0};
   switch (_rocketParams.sideThrusterState) {
   case SideThrusterState::LEFT_ON:
@@ -312,6 +323,25 @@ void SimulationCore::updateRotationalMotionPartOfSystemState(
       _rocketParams.angle + (_rocketParams.angularVelocity * dtAsSeconds) +
       (0.5 * _rocketParams.angularAcceleration * dtAsSeconds * dtAsSeconds);
 
+  pthread_rwlock_unlock(&_simDataLock);
+}
+
+void SimulationCore::updateIndependentVariables(const float &dtAsSeconds) {
+  pthread_rwlock_wrlock(&_simDataLock);
+  _rocketParams.oxygen = _rocketParams.oxygen -
+                         commonConsts::OXYGEN_USAGE_PER_SECOND * dtAsSeconds;
+  if (_rocketParams.mainThrusterState == MainThrusterState::TURN_ON) {
+    _rocketParams.fuel =
+        _rocketParams.fuel -
+        commonConsts::MAIN_ENGINE_FUEL_USAGE_PER_SECOND * dtAsSeconds;
+  }
+
+  if (_rocketParams.sideThrusterState == SideThrusterState::LEFT_ON or
+      _rocketParams.sideThrusterState == SideThrusterState::RIGHT_ON) {
+    _rocketParams.fuel =
+        _rocketParams.fuel -
+        commonConsts::SIDE_THRUSTER_FUEL_USAGE_PER_SECOND * dtAsSeconds;
+  }
   pthread_rwlock_unlock(&_simDataLock);
 }
 
@@ -392,10 +422,13 @@ void SimulationCore::updateCurrentThrustersControl() {
     // LogReceivedControl(thrusterStateMsg);
   }
 
-  pthread_rwlock_wrlock(&_simDataLock);
-  _rocketParams.mainThrusterState = thrusterStateMsg.mainThrusterState;
-  _rocketParams.sideThrusterState = thrusterStateMsg.sideThrusterState;
-  pthread_rwlock_unlock(&_simDataLock);
+  // WITHOUT OXYGEN, WE HAVE NO CREW, THEREFOR NO CONTROL
+  if (_rocketParams.oxygen > 0) {
+    pthread_rwlock_wrlock(&_simDataLock);
+    _rocketParams.mainThrusterState = thrusterStateMsg.mainThrusterState;
+    _rocketParams.sideThrusterState = thrusterStateMsg.sideThrusterState;
+    pthread_rwlock_unlock(&_simDataLock);
+  }
 }
 
 void SimulationCore::sendVisualizationData() {
@@ -409,7 +442,9 @@ void SimulationCore::sendVisualizationData() {
       .mainThrusterState = _rocketParams.mainThrusterState,
       .sideThrusterState = _rocketParams.sideThrusterState,
       .destinationPosition = _destinationParams.position,
-      .rockePosition = _rocketParams.position};
+      .rockePosition = _rocketParams.position,
+      .oxygen = _rocketParams.oxygen};
+
   pthread_rwlock_unlock(&_simDataLock);
 
   if (mq_send(comm::rocketVisualizationQueue,

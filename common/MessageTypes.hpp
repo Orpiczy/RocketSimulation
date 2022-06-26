@@ -29,6 +29,7 @@ struct RocketVisualizationContainerMsg {
   SideThrusterState sideThrusterState{SideThrusterState::TURN_OFF};
   sf::Vector2f destinationPosition{0, 0};
   sf::Vector2f rockePosition{0, 0};
+  StorageTank oxygen{0};
 };
 
 } // namespace msg

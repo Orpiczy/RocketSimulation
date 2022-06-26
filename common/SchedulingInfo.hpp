@@ -4,8 +4,9 @@
 using SchedulingPriority = schedulingManagment::SchedulingPriority;
 namespace schedulingInfo {
 
-// I
+// DEFAULT
 const static SchedulingPriority initialPriority = SchedulingPriority::min;
+const static int queueDefaultType = SCHED_FIFO;
 
 // CORE
 const static SchedulingPriority simulationPriority = SchedulingPriority::min;

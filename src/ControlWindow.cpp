@@ -16,7 +16,7 @@ ControlWindow::ControlWindow(const Vector2i &mainWindowPosition,
     : SimpleLogger(isLogInfoEnable, isLogErrorEnable) {
 
   schedulingManagment::setAndLogSchedulingPolicyAndPriority(
-      "ControlWindow::ControlWindow", SCHED_FIFO,
+      "ControlWindow::ControlWindow", schedulingInfo::queueDefaultType,
       schedulingInfo::initialPriority);
 
   setWindowSizeAndPosition(mainWindowPosition);
@@ -90,7 +90,7 @@ std::thread ControlWindow::getAndRunPublishingUpdateOnThrustersControlThread() {
   auto publishingUpdateOnThrustersControlLambda = [this]() {
     schedulingManagment::setAndLogSchedulingPolicyAndPriority(
         "ControlWindow::getAndRunPublishingUpdateOnThrustersControlThread()",
-        SCHED_FIFO, schedulingInfo::sendingCmdPriority);
+        schedulingInfo::queueDefaultType, schedulingInfo::sendingCmdPriority);
     publishThrustersControl();
   };
 

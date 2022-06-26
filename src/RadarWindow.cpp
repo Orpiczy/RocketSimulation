@@ -17,7 +17,8 @@ RadarWindow::RadarWindow(const Vector2i &mainWindowPosition,
     : SimpleLogger(isLogInfoEnable, isLogErrorEnable) {
 
   schedulingManagment::setAndLogSchedulingPolicyAndPriority(
-      "RadarWindow::RadarWindow", SCHED_FIFO, schedulingInfo::initialPriority);
+      "RadarWindow::RadarWindow", schedulingInfo::queueDefaultType,
+      schedulingInfo::initialPriority);
 
   setWindowSizeAndPosition(mainWindowPosition);
   setMaxRadarSpriteDistane();
@@ -67,7 +68,8 @@ void RadarWindow::draw() {
 std::thread RadarWindow::getAndRunUpdatingDataThread() {
   auto runningUpdateInLoopLambda = [this]() {
     schedulingManagment::setAndLogSchedulingPolicyAndPriority(
-        "RadarWindow::getAndRunUpdatingDataThread", SCHED_FIFO,
+        "RadarWindow::getAndRunUpdatingDataThread",
+        schedulingInfo::queueDefaultType,
         schedulingInfo::updatingVisDataPriority);
     LG_INF("RADAR WINDOW - ENTERING LOOP - UpdatingData lambda in parallel "
            "thread");

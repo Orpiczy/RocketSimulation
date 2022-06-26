@@ -37,6 +37,7 @@ private:
   void updateLinearMotionPartOfSystemState(const float &dtAsSeconds);
   void updateRotationalMotionPartOfSystemState(const float &dtAsSeconds);
   float getAngleInRadiansInClassicCoordinateSystem(const float &angle);
+  void updateIndependentVariables(const float &dtAsSeconds); // O2 and fuel
 
   // COMMUNICATION
   void sendVisualizationData();

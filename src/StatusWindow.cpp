@@ -16,7 +16,7 @@ StatusWindow::StatusWindow(const Vector2i &mainWindowPosition,
     : SimpleLogger(isLogInfoEnable, isLogErrorEnable) {
 
   schedulingManagment::setAndLogSchedulingPolicyAndPriority(
-      "StatusWindow::StatusWindow", SCHED_FIFO,
+      "StatusWindow::StatusWindow", schedulingInfo::queueDefaultType,
       schedulingInfo::initialPriority);
 
   setWindowSizeAndPosition(mainWindowPosition);
@@ -72,7 +72,8 @@ std::thread StatusWindow::getAndRunUpdatingDataThread() {
 
   auto runningUpdateInLoopLambda = [this]() {
     schedulingManagment::setAndLogSchedulingPolicyAndPriority(
-        "StatusWindow::getAndRunUpdatingDataThread()", SCHED_FIFO,
+        "StatusWindow::getAndRunUpdatingDataThread()",
+        schedulingInfo::queueDefaultType,
         schedulingInfo::updatingVisDataPriority);
 
     LG_INF("STATUS WINDOW - ENTERING LOOP - UpdatingData lambda in parallel "

@@ -20,7 +20,8 @@ MainWindow::MainWindow(const Vector2i &referencePoint, bool isLogInfoEnable,
     : SimpleLogger(isLogInfoEnable, isLogErrorEnable) {
 
   schedulingManagment::setAndLogSchedulingPolicyAndPriority(
-      "MainWindow::MainWindow", SCHED_FIFO, schedulingInfo::initialPriority);
+      "MainWindow::MainWindow", schedulingInfo::queueDefaultType,
+      schedulingInfo::initialPriority);
 
   setWindowSizeAndPosition(referencePoint);
   setTexturesAndSprites();
@@ -77,7 +78,8 @@ void MainWindow::draw() {
 std::thread MainWindow::getAndRunUpdatingDataThread() {
   auto runningUpdateInLoopLambda = [this]() {
     schedulingManagment::setAndLogSchedulingPolicyAndPriority(
-        "MainWindow::getAndRunUpdatingDataThread", SCHED_FIFO,
+        "MainWindow::getAndRunUpdatingDataThread",
+        schedulingInfo::queueDefaultType,
         schedulingInfo::updatingVisDataPriority);
 
     LG_INF(

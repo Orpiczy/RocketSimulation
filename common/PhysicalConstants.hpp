@@ -10,6 +10,12 @@ static const int ROCKET_HEIGHT{110};           // METERS
 static const float ROCKET_MOMENT_OF_INERTIA{0.5 * ROCKET_MASS *
                                             (0.5 * ROCKET_HEIGHT) *
                                             (0.5 * ROCKET_HEIGHT)}; // KG * m^2
+
+// INDEPENDANT VARIABLES
+static const float OXYGEN_USAGE_PER_SECOND{1};
+static const float MAIN_ENGINE_FUEL_USAGE_PER_SECOND{1};
+static const float SIDE_THRUSTER_FUEL_USAGE_PER_SECOND{0.5};
+
 // ACCORDING TO EQUATION FOR CILINDER INERTIA MOMENT
 
 } // namespace commonConsts
