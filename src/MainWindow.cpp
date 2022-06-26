@@ -39,6 +39,8 @@ void MainWindow::start() {
   LG_INF("MAIN WINDOW - LOOP HAS STARTED");
 
   auto updatingDataInBackgroundThread = getAndRunUpdatingDataThread();
+  auto updatingSimulationStatusThread =
+      getAndRunUpdatingSimulationStatusThread();
 
   while (_window.isOpen()) {
     input();
@@ -56,13 +58,46 @@ void MainWindow::input() {
   }
 }
 
-void MainWindow::update() {
+void MainWindow::updateVisualData() {
   auto newData = getVisualizationData();
   updateElementsState(newData);
 }
 
+void MainWindow::updateSimulationState() {
+  auto newData = getSimulationStatusData();
+  updateSimulationState(newData);
+}
+
 void MainWindow::draw() {
   _window.clear(Color::White);
+  switch (_simulationState) {
+
+  case SimulationStatus::READY_TO_START:
+    drawInReadyToStartState();
+    break;
+
+  case SimulationStatus::ACTIVE:
+    drawInActiveState();
+    break;
+
+  case SimulationStatus::SUCCESS:
+    drawInSuccessState();
+    break;
+
+  case SimulationStatus::FAILURE:
+    drawInFailureState();
+    break;
+
+  default:
+    break;
+  }
+
+  _window.display();
+}
+
+void MainWindow::drawInReadyToStartState() { _window.clear(Color::Green); }
+
+void MainWindow::drawInActiveState() {
   _window.draw(_backgroundSprite);
   for (auto &starDust : _starDustContainerInBackground.getElements()) {
     _window.draw(starDust.getSprite());
@@ -72,8 +107,10 @@ void MainWindow::draw() {
   for (auto &starDust : _starDustContainerInForeground.getElements()) {
     _window.draw(starDust.getSprite());
   }
-  _window.display();
 }
+
+void MainWindow::drawInSuccessState() { _window.clear(Color::Yellow); }
+void MainWindow::drawInFailureState() { _window.clear(Color::Red); }
 
 std::thread MainWindow::getAndRunUpdatingDataThread() {
   auto runningUpdateInLoopLambda = [this]() {
@@ -85,7 +122,7 @@ std::thread MainWindow::getAndRunUpdatingDataThread() {
     LG_INF(
         "MAIN WINDOW - ENTERING LOOP - UpdatingData lambda in parallel thread");
     while (_window.isOpen()) {
-      update();
+      updateVisualData();
     }
     LG_INF(
         "MAIN WINDOW- EXITING LOOP - UpdatingData lambda in parallel thread");
@@ -94,8 +131,41 @@ std::thread MainWindow::getAndRunUpdatingDataThread() {
   return updatingThread;
 }
 
+std::thread MainWindow::getAndRunUpdatingSimulationStatusThread() {
+
+  auto runningUpdateOnSimulationStatusInLoopLambda = [this]() {
+    schedulingManagment::setAndLogSchedulingPolicyAndPriority(
+        "MainWindow::getAndRunUpdatingSimulationStatusThread",
+        schedulingInfo::queueDefaultType,
+        schedulingInfo::updatingSimStatusPriority);
+
+    LG_INF("MAIN WINDOW - ENTERING LOOP - Updating Status lambda in parallel "
+           "thread");
+    while (_window.isOpen()) {
+      updateSimulationState();
+    }
+    LG_INF("MAIN WINDOW- EXITING LOOP - Updating Status lambda in parallel "
+           "thread");
+  };
+
+  std::thread updatingThread(runningUpdateOnSimulationStatusInLoopLambda);
+  return updatingThread;
+}
+
 //// COMMUNICATION SETUP
 void MainWindow::openQueues() {
+
+  // SIMULATION STATUS
+  if ((comm::simulationStatusQueue =
+           mq_open(comm::SIMULATION_STATUS_QUEUE_FILE, O_CREAT | O_RDWR, 0644,
+                   &comm::simulationStatusQueueAttr)) == -1) {
+    printf(" >> ERROR - SIMULATION CORE - FAILED TO OPEN SIMULATION STATUS"
+           "QUEUE %s\n",
+           strerror(errno));
+    return;
+  }
+
+  // ROCKET VISUALIZATION
   if ((comm::rocketVisualizationQueue =
            mq_open(comm::ROCKET_VISUALIZATION_QUEUE_FILE, O_CREAT | O_RDWR,
                    0644, &comm::rocketVisualizationQueueAttr)) == -1) {
@@ -105,7 +175,22 @@ void MainWindow::openQueues() {
     return;
   }
 }
-void MainWindow::closeQueues() { mq_close(comm::rocketVisualizationQueue); }
+void MainWindow::closeQueues() {
+
+  // SIMULATION STATUS
+  if (mq_close(comm::simulationStatusQueue) == -1) {
+    printf(" >> ERROR - MainWindow - FAILED TO CLOSE SIMULATION STATUS "
+           "QUEUE %s\n",
+           strerror(errno));
+  }
+
+  // ROCKET VISUALIZATION
+  if (mq_close(comm::rocketVisualizationQueue) == -1) {
+    printf(" >> ERROR - MainWindow - FAILED TO CLOSE ROCKET VISUALIZATION "
+           "QUEUE %s\n",
+           strerror(errno));
+  }
+}
 
 //// COMMUNICATION
 
@@ -123,12 +208,21 @@ msg::RocketVisualizationContainerMsg MainWindow::getVisualizationData() {
   return visualizationContainerMsg;
 }
 
+msg::SimulationStatusMsg MainWindow::getSimulationStatusData() {
+  msg::SimulationStatusMsg simulationStatusMsg;
+  if (mq_receive(comm::simulationStatusQueue, (char *)&simulationStatusMsg,
+                 sizeof(msg::SimulationStatusMsg), NULL) == -1) {
+    LG_ERR("MAIN WINDOW - FAILED TO RECEIVE SIMULATION STATUS DATA - " +
+           std::string(strerror(errno)));
+  }
+  return simulationStatusMsg;
+}
+
 //// DATA MANAGMENT
 
 void MainWindow::updateElementsState(
     const msg::RocketVisualizationContainerMsg &visualizationContainerMsg) {
   updateRocketState(visualizationContainerMsg);
-  updateStarDust(visualizationContainerMsg);
   updateStarDust(visualizationContainerMsg);
 }
 
@@ -154,9 +248,13 @@ void MainWindow::updateRocketState(
   //  LG_INF(ss.str());
 }
 
+void MainWindow::updateSimulationState(
+    const msg::SimulationStatusMsg &simulationStatusMsg) {
+  _simulationState = simulationStatusMsg.status;
+}
+
 void MainWindow::updateStarDust(
     const msg::RocketVisualizationContainerMsg &visualizationContainerMsg) {
-
   _starDustContainerInForeground.update(
       visualizationContainerMsg.velocity,
       visualizationContainerMsg.rockePosition);
@@ -175,7 +273,6 @@ void MainWindow::setWindowSizeAndPosition(const Vector2i &referencePoint) {
 }
 
 void MainWindow::setTexturesAndSprites() {
-
   // BACKGROUND
 
   _backgroundTexture.loadFromFile(common::IMG_ABS_PATH + "background3.jpg");

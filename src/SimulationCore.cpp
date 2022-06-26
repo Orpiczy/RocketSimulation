@@ -128,7 +128,9 @@ std::thread SimulationCore::getAndRunRunningSimulationInLoopThread() {
     while (true) {
       Time dt = clock.restart();
       float dtAsSeconds = dt.asSeconds();
-      updateSystemState(dtAsSeconds);
+      if (_simulationStatus == SimulationStatus::ACTIVE) {
+        updateSystemState(dtAsSeconds);
+      }
     }
     LG_INF("SIMULATION CORE - EXITING LOOP - simulation running lambda in "
            "parallel thread");
@@ -147,6 +149,7 @@ std::thread SimulationCore::getAndRunSendingDataInLoopThread() {
         schedulingInfo::sendingDataFromCorePriority);
 
     Clock sendingVisualizationTimer;
+    Clock sendingSimulationStatusTimer;
     Clock sendingPositionTimer;
     Clock sendingRocketStatusTimer;
 
@@ -156,6 +159,12 @@ std::thread SimulationCore::getAndRunSendingDataInLoopThread() {
           _sendingVisualizationDataPeriod) {
         sendingVisualizationTimer.restart();
         sendVisualizationData();
+      }
+
+      if (sendingSimulationStatusTimer.getElapsedTime() >
+          _sendingSimulationStatusPeriod) {
+        sendingSimulationStatusTimer.restart();
+        sendSimulationStatus();
       }
 
       if (sendingPositionTimer.getElapsedTime() >
@@ -348,6 +357,18 @@ void SimulationCore::updateIndependentVariables(const float &dtAsSeconds) {
 //// COMMUNICATION SETUP
 void SimulationCore::openQueues() {
 
+  // SIMULATION STATUS
+  if ((comm::simulationStatusQueue = mq_open(
+           comm::SIMULATION_STATUS_QUEUE_FILE, O_CREAT | O_RDWR | O_NONBLOCK,
+           0644, &comm::simulationStatusQueueAttr)) == -1) {
+    printf(" >> ERROR - SIMULATION CORE - FAILED TO OPEN SIMULATION STATUS"
+           "QUEUE %s\n",
+           strerror(errno));
+    return;
+  } else {
+    printf(" >> INFO - SIMULATION_STATUS_QUEUE WAS SUCCESSFULY OPEN\n");
+  }
+
   // ROCKET VISUALIZATION
   if ((comm::rocketVisualizationQueue =
            mq_open(comm::ROCKET_VISUALIZATION_QUEUE_FILE, O_CREAT | O_RDWR,
@@ -388,6 +409,11 @@ void SimulationCore::openQueues() {
 }
 
 void SimulationCore::closeQueues() {
+  if (mq_close(comm::simulationStatusQueue) == -1) {
+    printf(" >> ERROR - SIMULATION CORE - FAILED TO CLOSE SIMULATION STATUS "
+           "QUEUE %s\n",
+           strerror(errno));
+  }
   if (mq_close(comm::rocketVisualizationQueue) == -1) {
     printf(" >> ERROR - SIMULATION CORE - FAILED TO CLOSE ROCKET VISUALIZATION "
            "QUEUE %s\n",
@@ -455,6 +481,20 @@ void SimulationCore::sendVisualizationData() {
            std::string(strerror(errno)));
   } else {
     // LG_INF("SIMULATION CORE - SENT UPDATE ON VISUALIZATION DATA");
+  }
+}
+
+void SimulationCore::sendSimulationStatus() {
+
+  pthread_rwlock_rdlock(&_simDataLock);
+  msg::SimulationStatusMsg simulationStatusMsg{.status = _simulationStatus};
+  pthread_rwlock_unlock(&_simDataLock);
+
+  if (mq_send(comm::simulationStatusQueue, (char *)&simulationStatusMsg,
+              sizeof(msg::SimulationStatusMsg),
+              comm::simulationStatusMsgPriority) == -1) {
+    LG_ERR("SIMULATION CORE - FAILED TO SEND SIMULATION STATUS - " +
+           std::string(strerror(errno)));
   }
 }
 

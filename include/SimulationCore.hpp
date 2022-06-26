@@ -19,6 +19,8 @@ public:
   void run();
 
 private:
+  common::SimulationStatus _simulationStatus{SimulationStatus::READY_TO_START};
+
   common::RocketParams _rocketParams{.oxygen = 100, .fuel = 100};
   // const float _moonDistanceScale{0.01};
   // common::DestinationParams _destinationParams{
@@ -41,11 +43,13 @@ private:
 
   // COMMUNICATION
   void sendVisualizationData();
+  void sendSimulationStatus();
   void updateCurrentThrustersControl();
   void sendObjectsPosition();
   void sendRocketStatus();
 
   const sf::Time _sendingVisualizationDataPeriod{sf::milliseconds(20)}; //~50fps
+  const sf::Time _sendingSimulationStatusPeriod{sf::milliseconds(100)};
   const sf::Time _sendingObjectsPositionPeriod{sf::milliseconds(100)};
   const sf::Time _sendingRocketStatusPeriod{sf::milliseconds(100)};
 

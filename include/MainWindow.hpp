@@ -35,11 +35,24 @@ private:
   spriteObjects::StarDustContainer<spriteObjects::StarDust, 40>
       _starDustContainerInBackground;
 
+  SimulationStatus _simulationState{SimulationStatus::READY_TO_START};
+
   void input();
-  void update();
+  void update() {
+    updateVisualData();
+    updateSimulationState();
+  }
+  void updateVisualData();
+  void updateSimulationState();
   void draw();
 
+  void drawInReadyToStartState();
+  void drawInActiveState();
+  void drawInSuccessState();
+  void drawInFailureState();
+
   std::thread getAndRunUpdatingDataThread();
+  std::thread getAndRunUpdatingSimulationStatusThread();
 
   // COMMUNICATION SETUP
   void openQueues();
@@ -47,6 +60,7 @@ private:
 
   //// COMMUNICATION
   msg::RocketVisualizationContainerMsg getVisualizationData();
+  msg::SimulationStatusMsg getSimulationStatusData();
 
   //// DATA MANAGMENT
   void updateElementsState(
@@ -55,6 +69,8 @@ private:
       const msg::RocketVisualizationContainerMsg &visualizationContainerMsg);
   void updateStarDust(
       const msg::RocketVisualizationContainerMsg &visualizationContainerMsg);
+  void
+  updateSimulationState(const msg::SimulationStatusMsg &simulationStatusMsg);
 
   //// SETUP HELPERS
   void setWindowSizeAndPosition(const Vector2i &referencePoint);

@@ -35,6 +35,15 @@ static struct mq_attr rocketStatusQueueAttr {
 static const char *ROCKET_STATUS_QUEUE_FILE{"/rocket_status_queue"};
 static const long statusMsgPriority = _SC_MQ_PRIO_MAX;
 
+// CORE -> MAIN WINDOW - SIMULATION STATE
+static mqd_t simulationStatusQueue;
+static struct mq_attr simulationStatusQueueAttr {
+  .mq_maxmsg = 10, .mq_msgsize = sizeof(msg::SimulationStatusMsg)
+};
+
+static const char *SIMULATION_STATUS_QUEUE_FILE{"/simulation_status_queue"};
+static const long simulationStatusMsgPriority = _SC_MQ_PRIO_MAX;
+
 // CORE -> MAIN WINDOW
 static mqd_t rocketVisualizationQueue;
 static struct mq_attr rocketVisualizationQueueAttr {

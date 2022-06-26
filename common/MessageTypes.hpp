@@ -32,4 +32,8 @@ struct RocketVisualizationContainerMsg {
   StorageTank oxygen{0};
 };
 
+struct SimulationStatusMsg {
+  SimulationStatus status{SimulationStatus::READY_TO_START};
+};
+
 } // namespace msg

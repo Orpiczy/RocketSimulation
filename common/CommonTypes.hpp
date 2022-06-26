@@ -8,6 +8,8 @@ enum class MainThrusterState { TURN_ON, TURN_OFF, DAMAGED, UNKNOWN };
 
 enum class SideThrusterState { LEFT_ON, RIGHT_ON, TURN_OFF, DAMAGED, UNKNOWN };
 
+enum class SimulationStatus { READY_TO_START, ACTIVE, SUCCESS, FAILURE };
+
 class StorageTank {
 public:
   StorageTank(const float initialValue) {

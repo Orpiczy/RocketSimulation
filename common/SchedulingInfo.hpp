@@ -19,6 +19,8 @@ const static SchedulingPriority updatingCmdInCorePriority =
 const static SchedulingPriority sendingCmdPriority = SchedulingPriority::medium;
 
 // OTHERS
+const static SchedulingPriority updatingSimStatusPriority =
+    SchedulingPriority::min;
 const static SchedulingPriority updatingVisDataPriority =
     SchedulingPriority::max;
 
