@@ -26,7 +26,8 @@ Code executes in six concurrent processes and many of them starts additional thr
   * updatingDataInBackgroundThread
   * refreshingWindowContentThread*
 3. **Control Window Process** - displays available rocket control and sends all modification to simulation core
-  * publishingUpdateOnThrustersControl and refreshingWindowContent Thread*
+  * publishingUpdateOnThrustersControlThread 
+  * refreshingWindowContentThread*
 4. **Radar Window Process** - displays radar info
   * updatingDataInBackgroundThread
   * refreshingWindowContentThread*

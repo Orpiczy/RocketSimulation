@@ -6,9 +6,19 @@
 #include <errno.h>
 #include <string.h>
 
+// scheduling
+#include "../common/SchedulingInfo.hpp"
+#include "../common/SchedulingManagment.hpp"
+using SchedulingPriority = schedulingManagment::SchedulingPriority;
+
 ControlWindow::ControlWindow(const Vector2i &mainWindowPosition,
                              bool isLogInfoEnable, bool isLogErrorEnable)
     : SimpleLogger(isLogInfoEnable, isLogErrorEnable) {
+
+  schedulingManagment::setAndLogSchedulingPolicyAndPriority(
+      "ControlWindow::ControlWindow", SCHED_FIFO,
+      schedulingInfo::initialPriority);
+
   setWindowSizeAndPosition(mainWindowPosition);
   updateDescription();
   setTexturesAndSprites();
@@ -69,9 +79,24 @@ void ControlWindow::input() {
     }
 
     if (clickecElementId != -1) {
-      publishThrustersControl();
+      auto publishingUpdateOnThrustersControlThread =
+          getAndRunPublishingUpdateOnThrustersControlThread();
+      publishingUpdateOnThrustersControlThread.join();
     }
   }
+}
+
+std::thread ControlWindow::getAndRunPublishingUpdateOnThrustersControlThread() {
+  auto publishingUpdateOnThrustersControlLambda = [this]() {
+    schedulingManagment::setAndLogSchedulingPolicyAndPriority(
+        "ControlWindow::getAndRunPublishingUpdateOnThrustersControlThread()",
+        SCHED_FIFO, schedulingInfo::sendingCmdPriority);
+    publishThrustersControl();
+  };
+
+  std::thread publishingUpdateOnThrustersControlThread(
+      publishingUpdateOnThrustersControlLambda);
+  return publishingUpdateOnThrustersControlThread;
 }
 
 void ControlWindow::update() {}
@@ -126,7 +151,7 @@ void ControlWindow::publishThrustersControl() {
            thrusterStateMsg.sideThrusterState) = getThrustersState();
 
   if (mq_send(comm::thrustersControlQueue, (const char *)&thrusterStateMsg,
-              sizeof(msg::ThrustersStateMsg), 0) == -1) {
+              sizeof(msg::ThrustersStateMsg), comm::cmdMsgPriority) == -1) {
     LG_ERR("Control Window - FAILED TO SEND CONTROL - " +
            std::string(strerror(errno)));
   } else {

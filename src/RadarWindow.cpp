@@ -7,9 +7,18 @@
 #include <mqueue.h>
 #include <string.h>
 
+// scheduling
+#include "../common/SchedulingInfo.hpp"
+#include "../common/SchedulingManagment.hpp"
+using SchedulingPriority = schedulingManagment::SchedulingPriority;
+
 RadarWindow::RadarWindow(const Vector2i &mainWindowPosition,
                          bool isLogInfoEnable, bool isLogErrorEnable)
     : SimpleLogger(isLogInfoEnable, isLogErrorEnable) {
+
+  schedulingManagment::setAndLogSchedulingPolicyAndPriority(
+      "RadarWindow::RadarWindow", SCHED_FIFO, schedulingInfo::initialPriority);
+
   setWindowSizeAndPosition(mainWindowPosition);
   setMaxRadarSpriteDistane();
   setTexturesAndSprites();
@@ -57,6 +66,9 @@ void RadarWindow::draw() {
 
 std::thread RadarWindow::getAndRunUpdatingDataThread() {
   auto runningUpdateInLoopLambda = [this]() {
+    schedulingManagment::setAndLogSchedulingPolicyAndPriority(
+        "RadarWindow::getAndRunUpdatingDataThread", SCHED_FIFO,
+        schedulingInfo::updatingVisDataPriority);
     LG_INF("RADAR WINDOW - ENTERING LOOP - UpdatingData lambda in parallel "
            "thread");
     while (_window.isOpen()) {

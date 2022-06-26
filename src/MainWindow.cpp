@@ -10,9 +10,18 @@
 // debug
 #include <sstream>
 
+// scheduling
+#include "../common/SchedulingInfo.hpp"
+#include "../common/SchedulingManagment.hpp"
+using SchedulingPriority = schedulingManagment::SchedulingPriority;
+
 MainWindow::MainWindow(const Vector2i &referencePoint, bool isLogInfoEnable,
                        bool isLogErrorEnable)
     : SimpleLogger(isLogInfoEnable, isLogErrorEnable) {
+
+  schedulingManagment::setAndLogSchedulingPolicyAndPriority(
+      "MainWindow::MainWindow", SCHED_FIFO, schedulingInfo::initialPriority);
+
   setWindowSizeAndPosition(referencePoint);
   setTexturesAndSprites();
   setUpElements();
@@ -67,6 +76,10 @@ void MainWindow::draw() {
 
 std::thread MainWindow::getAndRunUpdatingDataThread() {
   auto runningUpdateInLoopLambda = [this]() {
+    schedulingManagment::setAndLogSchedulingPolicyAndPriority(
+        "MainWindow::getAndRunUpdatingDataThread", SCHED_FIFO,
+        schedulingInfo::updatingVisDataPriority);
+
     LG_INF(
         "MAIN WINDOW - ENTERING LOOP - UpdatingData lambda in parallel thread");
     while (_window.isOpen()) {

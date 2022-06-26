@@ -6,9 +6,19 @@
 #include <mqueue.h>
 #include <string.h>
 
+// scheduling
+#include "../common/SchedulingInfo.hpp"
+#include "../common/SchedulingManagment.hpp"
+using SchedulingPriority = schedulingManagment::SchedulingPriority;
+
 StatusWindow::StatusWindow(const Vector2i &mainWindowPosition,
                            bool isLogInfoEnable, bool isLogErrorEnable)
     : SimpleLogger(isLogInfoEnable, isLogErrorEnable) {
+
+  schedulingManagment::setAndLogSchedulingPolicyAndPriority(
+      "StatusWindow::StatusWindow", SCHED_FIFO,
+      schedulingInfo::initialPriority);
+
   setWindowSizeAndPosition(mainWindowPosition);
   setTexturesAndSprites();
   updateDisplayedGaugeValues({2, 23, 67, 53});
@@ -61,6 +71,10 @@ void StatusWindow::draw() {
 std::thread StatusWindow::getAndRunUpdatingDataThread() {
 
   auto runningUpdateInLoopLambda = [this]() {
+    schedulingManagment::setAndLogSchedulingPolicyAndPriority(
+        "StatusWindow::getAndRunUpdatingDataThread()", SCHED_FIFO,
+        schedulingInfo::updatingVisDataPriority);
+
     LG_INF("STATUS WINDOW - ENTERING LOOP - UpdatingData lambda in parallel "
            "thread");
     while (_window.isOpen()) {

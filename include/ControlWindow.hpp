@@ -34,6 +34,8 @@ private:
   SwitchContainer<_nrOfElements> _thrusterSwitches{};
 
   void input();
+  std::thread getAndRunPublishingUpdateOnThrustersControlThread();
+
   void update();
   void draw();
 

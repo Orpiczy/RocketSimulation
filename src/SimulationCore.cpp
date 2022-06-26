@@ -1,6 +1,5 @@
 #include "../include/SimulationCore.hpp"
 #include "../common/classes/LogPublisher.hpp"
-#include "../common/classes/SchedulingManagment.hpp"
 #include "../include/ControlWindow.hpp"
 #include "../include/MainWindow.hpp"
 #include "../include/RadarWindow.hpp"
@@ -18,10 +17,18 @@
 // debug
 #include <sstream>
 
+// scheduling
+#include "../common/SchedulingInfo.hpp"
+#include "../common/SchedulingManagment.hpp"
 using SchedulingPriority = schedulingManagment::SchedulingPriority;
 
 SimulationCore::SimulationCore(bool isLogInfoEnable, bool isLogErrorEnable)
     : SimpleLogger(isLogInfoEnable, isLogErrorEnable) {
+
+  schedulingManagment::setAndLogSchedulingPolicyAndPriority(
+      "SimulationCore::SimulationCore", SCHED_FIFO,
+      schedulingInfo::initialPriority);
+
   pthread_rwlock_init(&_simDataLock, NULL);
   openQueues();
 }
@@ -111,14 +118,32 @@ void SimulationCore::startSimulation() {
   LG_INF("SIMULATION CORE - ENDING SIMULATION");
 }
 
+std::thread SimulationCore::getAndRunRunningSimulationInLoopThread() {
+  auto runningSimulationInLoopLambda = [this]() {
+    schedulingManagment::setAndLogSchedulingPolicyAndPriority(
+        "SimulationCore::getAndRunRunningSimulationInLoopThread()", SCHED_FIFO,
+        schedulingInfo::simulationPriority);
+
+    Clock clock;
+    while (true) {
+      Time dt = clock.restart();
+      float dtAsSeconds = dt.asSeconds();
+      updateSystemState(dtAsSeconds);
+    }
+    LG_INF("SIMULATION CORE - EXITING LOOP - simulation running lambda in "
+           "parallel thread");
+  };
+
+  std::thread simulationRunningThread(runningSimulationInLoopLambda);
+  return simulationRunningThread;
+}
+
 std::thread SimulationCore::getAndRunSendingDataInLoopThread() {
 
   auto sendingDataInLoopLambda = [this]() {
-    schedulingManagment::setSchedulingPolicyAndPriority(
-        SCHED_FIFO, SchedulingPriority::min);
-
-    LG_INF("SIMULATION CORE - ENTERING LOOP - sending data lambda in "
-           "parallel thread");
+    schedulingManagment::setAndLogSchedulingPolicyAndPriority(
+        "SimulationCore::getAndRunSendingDataInLoopThread", SCHED_FIFO,
+        schedulingInfo::sendingDataFromCorePriority);
 
     Clock sendingVisualizationTimer;
     Clock sendingPositionTimer;
@@ -155,8 +180,9 @@ std::thread SimulationCore::getAndRunSendingDataInLoopThread() {
 
 std::thread SimulationCore::getAndRunUpdatingControlInLoopThread() {
   auto updatingDataInLoopLambda = [this]() {
-    schedulingManagment::setSchedulingPolicyAndPriority(
-        SCHED_FIFO, SchedulingPriority::max);
+    schedulingManagment::setAndLogSchedulingPolicyAndPriority(
+        "SimulationCore::getAndRunUpdatingControlInLoopThread()", SCHED_FIFO,
+        schedulingInfo::updatingCmdInCorePriority);
 
     LG_INF("SIMULATION CORE - ENTERING LOOP - receiving control data "
            "lambda in "
@@ -172,26 +198,6 @@ std::thread SimulationCore::getAndRunUpdatingControlInLoopThread() {
 
   std::thread updatingControlThread(updatingDataInLoopLambda);
   return updatingControlThread;
-}
-std::thread SimulationCore::getAndRunRunningSimulationInLoopThread() {
-  auto runningSimulationInLoopLambda = [this]() {
-    schedulingManagment::setSchedulingPolicyAndPriority(
-        SCHED_FIFO, SchedulingPriority::medium);
-
-    LG_INF("SIMULATION CORE - ENTERING LOOP - simulation running lambda in "
-           "parallel thread");
-    Clock clock;
-    while (true) {
-      Time dt = clock.restart();
-      float dtAsSeconds = dt.asSeconds();
-      updateSystemState(dtAsSeconds);
-    }
-    LG_INF("SIMULATION CORE - EXITING LOOP - simulation running lambda in "
-           "parallel thread");
-  };
-
-  std::thread simulationRunningThread(runningSimulationInLoopLambda);
-  return simulationRunningThread;
 }
 
 void SimulationCore::updateSystemState(const float &dtAsSeconds) {
@@ -374,30 +380,6 @@ void SimulationCore::closeQueues() {
 
 //// COMMUNICATION
 
-void SimulationCore::sendVisualizationData() {
-  // _rocketParams.angle = _rocketParams.angle + 0.36;
-  // _rocketParams.angle = 90;
-
-  pthread_rwlock_rdlock(&_simDataLock);
-  msg::RocketVisualizationContainerMsg visualizationContainerMsg{
-      .velocity = _rocketParams.velocity,
-      .angle = _rocketParams.angle,
-      .mainThrusterState = _rocketParams.mainThrusterState,
-      .sideThrusterState = _rocketParams.sideThrusterState,
-      .destinationPosition = _destinationParams.position,
-      .rockePosition = _rocketParams.position};
-  pthread_rwlock_unlock(&_simDataLock);
-
-  if (mq_send(comm::rocketVisualizationQueue,
-              (char *)&visualizationContainerMsg,
-              sizeof(msg::RocketVisualizationContainerMsg), 0) == -1) {
-    LG_ERR("SIMULATION CORE - FAILED TO SEND VISUALIZATION DATA - " +
-           std::string(strerror(errno)));
-  } else {
-    // LG_INF("SIMULATION CORE - SENT UPDATE ON VISUALIZATION DATA");
-  }
-}
-
 void SimulationCore::updateCurrentThrustersControl() {
   msg::ThrustersStateMsg thrusterStateMsg;
 
@@ -416,6 +398,31 @@ void SimulationCore::updateCurrentThrustersControl() {
   pthread_rwlock_unlock(&_simDataLock);
 }
 
+void SimulationCore::sendVisualizationData() {
+  // _rocketParams.angle = _rocketParams.angle + 0.36;
+  // _rocketParams.angle = 90;
+
+  pthread_rwlock_rdlock(&_simDataLock);
+  msg::RocketVisualizationContainerMsg visualizationContainerMsg{
+      .velocity = _rocketParams.velocity,
+      .angle = _rocketParams.angle,
+      .mainThrusterState = _rocketParams.mainThrusterState,
+      .sideThrusterState = _rocketParams.sideThrusterState,
+      .destinationPosition = _destinationParams.position,
+      .rockePosition = _rocketParams.position};
+  pthread_rwlock_unlock(&_simDataLock);
+
+  if (mq_send(comm::rocketVisualizationQueue,
+              (char *)&visualizationContainerMsg,
+              sizeof(msg::RocketVisualizationContainerMsg),
+              comm::visualizationMsgPriority) == -1) {
+    LG_ERR("SIMULATION CORE - FAILED TO SEND VISUALIZATION DATA - " +
+           std::string(strerror(errno)));
+  } else {
+    // LG_INF("SIMULATION CORE - SENT UPDATE ON VISUALIZATION DATA");
+  }
+}
+
 void SimulationCore::sendObjectsPosition() {
 
   // TEST
@@ -431,7 +438,7 @@ void SimulationCore::sendObjectsPosition() {
   pthread_rwlock_unlock(&_simDataLock);
 
   if (mq_send(comm::objectsPositionQueue, (char *)&objectsPositionMsg,
-              sizeof(msg::ObjectsPositionMsg), 0) == -1) {
+              sizeof(msg::ObjectsPositionMsg), comm::radarMsgPriority) == -1) {
     LG_ERR("SIMULATION CORE - FAILED TO SEND OBJECTS POSITION - " +
            std::string(strerror(errno)));
   }
@@ -449,7 +456,7 @@ void SimulationCore::sendRocketStatus() {
   pthread_rwlock_unlock(&_simDataLock);
 
   if (mq_send(comm::rocketStatusQueue, (char *)&rocketStatusMsg,
-              sizeof(msg::RocketStatusMsg), 0) == -1) {
+              sizeof(msg::RocketStatusMsg), comm::statusMsgPriority) == -1) {
     LG_ERR("SIMULATION CORE - FAILED TO SEND ROCKET STATUS POSITION - " +
            std::string(strerror(errno)));
   } else {

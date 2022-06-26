@@ -19,7 +19,7 @@ public:
   void run();
 
 private:
-  common::RocketParams _rocketParams;
+  common::RocketParams _rocketParams{.oxygen = 100, .fuel = 100};
   // const float _moonDistanceScale{0.01};
   // common::DestinationParams _destinationParams{
   //     .position = {commonConsts::MOON_DISTANCE * (-0.2) / 100000,
