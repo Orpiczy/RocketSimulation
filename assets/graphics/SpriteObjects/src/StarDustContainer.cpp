@@ -21,7 +21,7 @@ void StarDustContainer<elementType, nrOfElements>::initialSpawn() {
     float x = getRandomFloatInRange(-_radiusOfPasivity, _radiusOfPasivity);
     float ySpawnRadius = sqrt(_radiusOfPasivity * _radiusOfPasivity - x * x);
     float y = getRandomFloatInRange(-ySpawnRadius, ySpawnRadius);
-    _elementsContainer.at(i).setNewAbsoluteAndDisplayPosition(
+    _elementsContainer.at(i).setNewAbsolutePositionAndDisplay(
         {x, y}, rocketInitialAbsolutePosition);
   }
 }
@@ -32,7 +32,7 @@ void StarDustContainer<elementType, nrOfElements>::update(
 
   for (auto &starDust : _elementsContainer) {
     if (starDust.getDistance(rocketAbsolutePosition) > _radiusOfActivity) {
-      starDust.setNewAbsoluteAndDisplayPosition(getSpawnPoint(velocity),
+      starDust.setNewAbsolutePositionAndDisplay(getSpawnPoint(velocity),
                                                 rocketAbsolutePosition);
     } else {
       starDust.updateDisplayPosition(rocketAbsolutePosition);

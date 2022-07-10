@@ -1,5 +1,5 @@
 #include "../include/Switch.hpp"
-#include "../../../../common/Common.hpp"
+#include "../../../../common/CommonDisplayInfo.hpp"
 
 namespace spriteObjects {
 

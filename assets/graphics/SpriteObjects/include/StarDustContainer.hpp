@@ -1,5 +1,5 @@
 #pragma once
-#include "../../../../common/Common.hpp"
+#include "../../../../common/CommonDisplayInfo.hpp"
 #include "../../../../common/classes/SimpleLogger.hpp"
 #include <array>
 

@@ -1,5 +1,5 @@
 #pragma once
-#include "../../../../common/Common.hpp"
+#include "../../../../common/CommonDisplayInfo.hpp"
 #include "../../../../common/CommonTypes.hpp"
 #include "../../../../common/interfaces/IContainerElement.hpp"
 #include <SFML/Graphics.hpp>

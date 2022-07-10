@@ -1,5 +1,5 @@
 #pragma once
-#include "../Common.hpp"
+#include "../CommonDisplayInfo.hpp"
 #include "Container.hpp"
 #include <SFML/Graphics.hpp>
 

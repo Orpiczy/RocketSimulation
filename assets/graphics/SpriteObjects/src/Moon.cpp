@@ -1,5 +1,5 @@
 #include "../include/Moon.hpp"
-#include "../../../../common/Common.hpp"
+#include "../../../../common/CommonDisplayInfo.hpp"
 
 namespace spriteObjects {
 

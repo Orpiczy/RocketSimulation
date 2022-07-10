@@ -12,6 +12,7 @@
 #include "../common/CommunicationInfo.hpp"
 
 // sim
+#include "../common/CommonMethods.hpp"
 #include "../common/PhysicalConstants.hpp"
 
 // debug
@@ -101,7 +102,7 @@ spawnPoint:
   waitpid(pid, NULL, 0); // kazdy czeka na siebie nawzajem
 }
 
-//// CORE
+// CORE
 
 void SimulationCore::startSimulation() {
   LG_INF("SIMULATION CORE - STARTING SIMULATION");
@@ -128,6 +129,7 @@ std::thread SimulationCore::getAndRunRunningSimulationInLoopThread() {
     while (true) {
       Time dt = clock.restart();
       float dtAsSeconds = dt.asSeconds();
+      updateSimulationStatus();
       if (_simulationStatus == SimulationStatus::ACTIVE) {
         updateSystemState(dtAsSeconds);
       }
@@ -215,6 +217,42 @@ void SimulationCore::updateSystemState(const float &dtAsSeconds) {
   updateLinearMotionPartOfSystemState(dtAsSeconds);
   updateRotationalMotionPartOfSystemState(dtAsSeconds);
   updateIndependentVariables(dtAsSeconds);
+}
+
+void SimulationCore::updateSimulationStatus() {
+  LG_INF("SIMULATION CORE - SIMULATION STATUS UPDATER");
+  switch (_simulationStatus) {
+
+  case SimulationStatus::READY_TO_START:
+    // if (Keyboard::isKeyPressed(Keyboard::Enter)) {
+    //   _simulationStatus = SimulationStatus::ACTIVE;
+    //   LG_INF("SIMULATION CORE - SIMULATION STATE - ACTIVE");
+    //   return;
+    // }
+    // break;
+
+  case SimulationStatus::ACTIVE:
+    updateSimulationStatusInActiveState();
+    break;
+
+  default:
+    break;
+  }
+  LG_INF("SIMULATION CORE - SIMULATION STATUS UPDATER - after switch");
+}
+
+void SimulationCore::updateSimulationStatusInActiveState() {
+  if (_rocketParams.oxygen == 0) {
+    _simulationStatus = SimulationStatus::FAILURE;
+    LG_INF("SIMULATION CORE - SIMULATION STATE - FAILURE");
+    return;
+  }
+  if (common::getDistance(_rocketParams.position, _destinationParams.position) <
+      _minimalMoonDistanceForMissionSuccess) {
+    _simulationStatus = SimulationStatus::SUCCESS;
+    LG_INF("SIMULATION CORE - SIMULATION STATE - SUCCESS");
+    return;
+  }
 }
 
 void SimulationCore::updateLinearMotionPartOfSystemState(
@@ -354,7 +392,7 @@ void SimulationCore::updateIndependentVariables(const float &dtAsSeconds) {
   pthread_rwlock_unlock(&_simDataLock);
 }
 
-//// COMMUNICATION SETUP
+// COMMUNICATION SETUP
 void SimulationCore::openQueues() {
 
   // SIMULATION STATUS
@@ -434,7 +472,7 @@ void SimulationCore::closeQueues() {
   }
 }
 
-//// COMMUNICATION
+// COMMUNICATION
 
 void SimulationCore::updateCurrentThrustersControl() {
   msg::ThrustersStateMsg thrusterStateMsg;
@@ -539,7 +577,7 @@ void SimulationCore::sendRocketStatus() {
   }
 }
 
-//// LOG HELPERS
+// LOG HELPERS
 void SimulationCore::LogReceivedControl(
     const msg::ThrustersStateMsg &thrusterStateMsg) {
   switch (thrusterStateMsg.mainThrusterState) {
@@ -575,7 +613,7 @@ void SimulationCore::LogReceivedControl(
   }
 }
 
-////DEBUG
+// DEBUG
 void SimulationCore::printQueueInfo(const mqd_t &queueFile) {
   struct mq_attr attr;
   mq_getattr(queueFile, &attr);

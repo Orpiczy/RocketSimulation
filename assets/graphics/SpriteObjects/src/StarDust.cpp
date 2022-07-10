@@ -1,5 +1,5 @@
 #include "../include/StarDust.hpp"
-#include "../../../../common/Common.hpp"
+#include "../../../../common/CommonDisplayInfo.hpp"
 #include <random>
 
 namespace spriteObjects {
@@ -7,12 +7,12 @@ namespace spriteObjects {
 StarDust::StarDust(bool isLogInfoEnable, bool isLogErrorEnable)
     : SimpleLogger(isLogInfoEnable, isLogErrorEnable) {
   setTextureAndSprite();
-  // DEFAULTS LIKE THIS TO MAKE MOON SPAWN OUTSIDE SCREEN
-  setNewAbsoluteAndDisplayPosition(
+  // DEFAULTS ARE LIKE THIS TO MAKE MOON SPAWN OUTSIDE SCREEN
+  setNewAbsolutePositionAndDisplay(
       {common::MAIN_WINDOW_X_SIZE * 2, common::MAIN_WINDOW_Y_SIZE * 2}, {0, 0});
 }
 
-//// HELPERS
+// HELPERS
 void StarDust::setTextureAndSprite() {
   _starDustTexture.loadFromFile(common::IMG_ABS_PATH + getTextureFilename());
   _starDustSprite.setTexture(_starDustTexture);
@@ -31,7 +31,7 @@ void StarDust::setTextureAndSprite() {
                _starDustSprite.getTexture()->getSize().y * 0.5));
 }
 
-void StarDust::setNewAbsoluteAndDisplayPosition(
+void StarDust::setNewAbsolutePositionAndDisplay(
     const sf::Vector2f &starDustRelativeToRocketPosition,
     const sf::Vector2f &rocketAbsolutePosition) {
 

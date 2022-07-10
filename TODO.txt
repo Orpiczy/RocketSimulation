@@ -1,7 +1,7 @@
 // Primary
 1. Add process to control window that publish updates
 2. Ogarnij maszyne stanow dla simulationStatus
-
+-
 // Secondary 
 1. Dodaj priorytety wątkom i procesom - DONE 
 2. Dodaj oblsługe printowania ERNO I bledow w logerze
@@ -12,7 +12,9 @@
 7. Czemu aby zmienic atrybuty kolejki to musze resetowac komputer - sprawdz poprawnosc zamykania kolejek
 8. Dlaczego uklad wspolrzednych okien jest taki kopniety, y w dol rosnie
 9. Publikowanie cmd w Control Window sie zcina czasem
+10
 11. REFACTOR
+12.
 
 
 // DO DOWIEDZENIA SIE

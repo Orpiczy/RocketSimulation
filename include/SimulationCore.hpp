@@ -27,6 +27,7 @@ private:
   //     .position = {commonConsts::MOON_DISTANCE * (-0.2) / 100000,
   //                  commonConsts::MOON_DISTANCE *(0.8) / 100000}};
   common::DestinationParams _destinationParams{.position = {0, 5000}};
+  float _minimalMoonDistanceForMissionSuccess {100.0};
   pthread_rwlock_t _simDataLock;
 
   // CORE
@@ -35,6 +36,8 @@ private:
   std::thread getAndRunUpdatingControlInLoopThread();
 
   void startSimulation();
+  void updateSimulationStatus(); 
+  void updateSimulationStatusInActiveState();
   void updateSystemState(const float &dtAsSeconds);
   void updateLinearMotionPartOfSystemState(const float &dtAsSeconds);
   void updateRotationalMotionPartOfSystemState(const float &dtAsSeconds);
@@ -57,9 +60,9 @@ private:
   void openQueues();
   void closeQueues();
 
-  //// LOG HELPERS
+  // LOG HELPERS
   void LogReceivedControl(const msg::ThrustersStateMsg &thrusterStateMsg);
 
-  //// DEBUG
+  // DEBUG
   void printQueueInfo(const mqd_t &queueFile);
 };

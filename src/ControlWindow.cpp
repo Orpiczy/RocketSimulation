@@ -1,5 +1,5 @@
 #include "../include/ControlWindow.hpp"
-#include "../common/Common.hpp"
+#include "../common/CommonDisplayInfo.hpp"
 #include "../common/CommunicationInfo.hpp"
 #include "../common/MessageTypes.hpp"
 #include <SFML/Graphics.hpp>

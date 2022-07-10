@@ -13,7 +13,7 @@ public:
 
   Sprite getSprite() { return _starDustSprite; }
 
-  void setNewAbsoluteAndDisplayPosition(
+  void setNewAbsolutePositionAndDisplay(
       const sf::Vector2f &starDustRelativeToRocketPosition,
       const sf::Vector2f &rocketAbsolutePosition);
   void updateDisplayPosition(const sf::Vector2f &rocketAbsolutePosition);

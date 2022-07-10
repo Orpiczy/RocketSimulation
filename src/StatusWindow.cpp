@@ -1,5 +1,5 @@
 #include "../include/StatusWindow.hpp"
-#include "../common/Common.hpp"
+#include "../common/CommonDisplayInfo.hpp"
 
 // comms
 #include "../common/CommunicationInfo.hpp"

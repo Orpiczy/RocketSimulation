@@ -1,7 +1,7 @@
 #include <algorithm>
 #include <math.h>
 
-#include "../../../../common/Common.hpp"
+#include "../../../../common/CommonDisplayInfo.hpp"
 #include "../include/Rocket.hpp"
 
 namespace spriteObjects {
@@ -39,7 +39,7 @@ const Vector2f Rocket::getRocketSpriteSize() const {
   return spriteSize;
 }
 
-//// HELPERS
+// HELPERS
 void Rocket::setTextureAndSpriteBaseOnRocketState() {
   _rocketTexture.loadFromFile(common::IMG_ABS_PATH +
                               getImageNameBaseOnRocketState());
