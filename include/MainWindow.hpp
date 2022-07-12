@@ -25,8 +25,14 @@ public:
 
 private:
   RenderWindow _window;
-  Texture _backgroundTexture;
+
+  Texture _readyToStartStateBackgroundTexture;
+  Texture _activeStateBackgroundTexture;
+  Texture _successStateBackgroundTexture;
+  Texture _failureStateBackgroundTexture;
+
   Sprite _backgroundSprite;
+
 
   spriteObjects::Rocket _rocket;
   spriteObjects::Moon _moon;
@@ -42,6 +48,9 @@ private:
     updateVisualData();
     updateSimulationState();
   }
+
+  void checkStateAndUpdateCurrentBackgroundSpriteTexture();
+  void updateBackgroundSprite();
   void updateVisualData();
   void updateSimulationState();
   void draw();
@@ -58,11 +67,11 @@ private:
   void openQueues();
   void closeQueues();
 
-  //// COMMUNICATION
+  // COMMUNICATION
   msg::RocketVisualizationContainerMsg getVisualizationData();
   msg::SimulationStatusMsg getSimulationStatusData();
 
-  //// DATA MANAGMENT
+  // DATA MANAGMENT
   void updateElementsState(
       const msg::RocketVisualizationContainerMsg &visualizationContainerMsg);
   void updateRocketState(
@@ -72,8 +81,11 @@ private:
   void
   updateSimulationState(const msg::SimulationStatusMsg &simulationStatusMsg);
 
-  //// SETUP HELPERS
+  // SETUP HELPERS
   void setWindowSizeAndPosition(const Vector2i &referencePoint);
   void setTexturesAndSprites();
   void setUpElements();
+
+  // DEBUG 
+  void LogSimulationState(const SimulationStatus& status);
 };

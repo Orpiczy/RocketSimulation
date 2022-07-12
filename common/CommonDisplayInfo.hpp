@@ -8,6 +8,7 @@ static const std::string PROJECT_PATH{
     "/home/black_wraith/Documents/AIR/S8/RealTime/RocketSimulation/"};
 static const std::string IMG_ABS_PATH{PROJECT_PATH + "assets/graphics/img/"};
 static const std::string FONT_ABS_PATH{PROJECT_PATH + "assets/fonts/"};
+static const std::string SOUND_ABS_PATH{PROJECT_PATH + "assets/sound/"};
 
 static const sf::Vector2i REFERNCE_POINT{0, 0};
 static const int RESOLUTION_X{1920};
@@ -17,8 +18,8 @@ static const int Y_MARGIN_SIZE{10};
 static const auto DEFAULT_WINDOW_STYLE = sf::Style::None;
 
 // Layout z paskiem kontrolnym obok
-static const int MAIN_WINDOW_X_SIZE{RESOLUTION_X * 2 / 3};
-static const int MAIN_WINDOW_Y_SIZE{RESOLUTION_Y * 5 / 6};
+static const int MAIN_WINDOW_X_SIZE{1400};
+static const int MAIN_WINDOW_Y_SIZE{800};
 
 static const int SIDE_WINDOW_X_SIZE{
     (RESOLUTION_X - MAIN_WINDOW_X_SIZE - X_MARGIN_SIZE) * 3 / 4};

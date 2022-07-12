@@ -4,7 +4,11 @@
 #include "../include/MainWindow.hpp"
 #include "../include/RadarWindow.hpp"
 #include "../include/StatusWindow.hpp"
+//audio
+#include "../common/CommonDisplayInfo.hpp"
+
 // multiprocess
+#include <chrono>
 #include <sys/wait.h>
 #include <unistd.h>
 
@@ -32,6 +36,8 @@ SimulationCore::SimulationCore(bool isLogInfoEnable, bool isLogErrorEnable)
 
   pthread_rwlock_init(&_simDataLock, NULL);
   openQueues();
+  setupSound();
+  updateBackgroundSoundBasedOnState();
 }
 
 SimulationCore::~SimulationCore() { closeQueues(); }
@@ -106,6 +112,7 @@ spawnPoint:
 
 void SimulationCore::startSimulation() {
   LG_INF("SIMULATION CORE - STARTING SIMULATION");
+
   auto simulationRunningThread = getAndRunRunningSimulationInLoopThread();
   auto sendingDataThread = getAndRunSendingDataInLoopThread();
   auto updatingControlThread = getAndRunUpdatingControlInLoopThread();
@@ -113,10 +120,37 @@ void SimulationCore::startSimulation() {
   while (true) {
     if (Keyboard::isKeyPressed(Keyboard::Escape)) {
       break;
+    } else {
+      auto currentTime = std::chrono::steady_clock::now();
+      std::this_thread::sleep_until(currentTime +
+                                    _updatingSimulationStatePeriod);
+      updateSimulationStatus();
     }
   }
 
   LG_INF("SIMULATION CORE - ENDING SIMULATION");
+}
+
+[[deprecated]] std::thread
+SimulationCore::getAndRunUpdatingSimulationStateInLoopThread() {
+  auto updatingSimulationStateInLoopLambda = [this]() {
+    schedulingManagment::setAndLogSchedulingPolicyAndPriority(
+        "SimulationCore::getAndRunUpdatingSimulationStateInLoopThread()",
+        schedulingInfo::queueDefaultType, schedulingInfo::stateUpdatePriority);
+
+    while (true) {
+      auto currentTime = std::chrono::steady_clock::now();
+      std::this_thread::sleep_until(currentTime +
+                                    _updatingSimulationStatePeriod);
+      updateSimulationStatus();
+    }
+
+    LG_INF("SIMULATION CORE - EXITING LOOP - simulation running lambda in "
+           "parallel thread");
+  };
+
+  std::thread updatingimulationStateThread(updatingSimulationStateInLoopLambda);
+  return updatingimulationStateThread;
 }
 
 std::thread SimulationCore::getAndRunRunningSimulationInLoopThread() {
@@ -129,7 +163,6 @@ std::thread SimulationCore::getAndRunRunningSimulationInLoopThread() {
     while (true) {
       Time dt = clock.restart();
       float dtAsSeconds = dt.asSeconds();
-      updateSimulationStatus();
       if (_simulationStatus == SimulationStatus::ACTIVE) {
         updateSystemState(dtAsSeconds);
       }
@@ -220,37 +253,44 @@ void SimulationCore::updateSystemState(const float &dtAsSeconds) {
 }
 
 void SimulationCore::updateSimulationStatus() {
-  LG_INF("SIMULATION CORE - SIMULATION STATUS UPDATER");
   switch (_simulationStatus) {
-
   case SimulationStatus::READY_TO_START:
-    // if (Keyboard::isKeyPressed(Keyboard::Enter)) {
-    //   _simulationStatus = SimulationStatus::ACTIVE;
-    //   LG_INF("SIMULATION CORE - SIMULATION STATE - ACTIVE");
-    //   return;
-    // }
-    // break;
+    if (Keyboard::isKeyPressed(Keyboard::Enter)) {
+      LG_INF("SIMULATION CORE - SIMULATION STATE SWITCHED TO ACTIVE");
+      _simulationStatus = SimulationStatus::ACTIVE;
+      updateBackgroundSoundBasedOnState();  
+    }
+    break;
 
   case SimulationStatus::ACTIVE:
     updateSimulationStatusInActiveState();
     break;
 
+  case SimulationStatus::SUCCESS:
+    break;
+  case SimulationStatus::FAILURE:
+    break;
+
   default:
+    LG_ERR("SIMULATION CORE - SIMULATION STATE - UNKNOWN");
     break;
   }
-  LG_INF("SIMULATION CORE - SIMULATION STATUS UPDATER - after switch");
 }
 
 void SimulationCore::updateSimulationStatusInActiveState() {
+
   if (_rocketParams.oxygen == 0) {
     _simulationStatus = SimulationStatus::FAILURE;
-    LG_INF("SIMULATION CORE - SIMULATION STATE - FAILURE");
+    updateBackgroundSoundBasedOnState();
+    LG_INF("SIMULATION CORE - SIMULATION STATE SWITCHED TO FAILURE");
     return;
   }
+
   if (common::getDistance(_rocketParams.position, _destinationParams.position) <
       _minimalMoonDistanceForMissionSuccess) {
     _simulationStatus = SimulationStatus::SUCCESS;
-    LG_INF("SIMULATION CORE - SIMULATION STATE - SUCCESS");
+    updateBackgroundSoundBasedOnState();
+    LG_INF("SIMULATION CORE - SIMULATION STATE SWITCHED TO  SUCCESS");
     return;
   }
 }
@@ -613,6 +653,33 @@ void SimulationCore::LogReceivedControl(
   }
 }
 
+// SOUND
+void SimulationCore::setupSound(){
+  _readyToStartStateSoundBuffer.loadFromFile(common::SOUND_ABS_PATH + "readyToStart" + "StateSound.wav");
+  _activeStateSoundBuffer.loadFromFile(common::SOUND_ABS_PATH + "active" + "StateSound.wav");
+  _successStateSoundBuffer.loadFromFile(common::SOUND_ABS_PATH + "success" + "StateSound.wav");
+  _failureStateSoundBuffer.loadFromFile(common::SOUND_ABS_PATH + "failure" + "StateSound.wav");
+}
+
+void SimulationCore::updateBackgroundSoundBasedOnState(){
+  switch (_simulationStatus) {
+  case SimulationStatus::READY_TO_START:
+    _backgroundSound.setBuffer(_readyToStartStateSoundBuffer);
+    break;
+  case SimulationStatus::ACTIVE:
+    _backgroundSound.setBuffer(_activeStateSoundBuffer);
+    break;
+  case SimulationStatus::SUCCESS:
+    _backgroundSound.setBuffer(_successStateSoundBuffer);
+    break;
+  case SimulationStatus::FAILURE:
+    _backgroundSound.setBuffer(_failureStateSoundBuffer);
+    break;
+  default:
+    LG_ERR("MAIN WINDOW - UUPDATING BACKGROUND SOUND- UNKNOWN STATE");
+  }
+  _backgroundSound.play();
+}
 // DEBUG
 void SimulationCore::printQueueInfo(const mqd_t &queueFile) {
   struct mq_attr attr;

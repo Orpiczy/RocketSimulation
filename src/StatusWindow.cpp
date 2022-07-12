@@ -213,6 +213,7 @@ void StatusWindow::setTexturesAndSprites() {
 
   // BACKGROUND
   _backgroundTexture.loadFromFile(common::IMG_ABS_PATH +
+                                  "background/defaultBackgrounds/" +
                                   "blackBackground1.jpg");
   _backgroundSprite.setTexture(_backgroundTexture);
   _backgroundSprite.setScale(

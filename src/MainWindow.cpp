@@ -50,68 +50,6 @@ void MainWindow::start() {
   }
 }
 
-void MainWindow::input() {
-
-  if (Keyboard::isKeyPressed(Keyboard::Escape)) {
-    LG_INF("MAIN WINDOW - ESC WAS PRESSED, CLOSING WINDOW, EXITING LOOP");
-    _window.close();
-  }
-}
-
-void MainWindow::updateVisualData() {
-  auto newData = getVisualizationData();
-  updateElementsState(newData);
-}
-
-void MainWindow::updateSimulationState() {
-  auto newData = getSimulationStatusData();
-  updateSimulationState(newData);
-}
-
-void MainWindow::draw() {
-  _window.clear(Color::White);
-  switch (_simulationState) {
-
-  case SimulationStatus::READY_TO_START:
-    drawInReadyToStartState();
-    break;
-
-  case SimulationStatus::ACTIVE:
-    drawInActiveState();
-    break;
-
-  case SimulationStatus::SUCCESS:
-    drawInSuccessState();
-    break;
-
-  case SimulationStatus::FAILURE:
-    drawInFailureState();
-    break;
-
-  default:
-    break;
-  }
-
-  _window.display();
-}
-
-void MainWindow::drawInReadyToStartState() { _window.clear(Color::Green); }
-
-void MainWindow::drawInActiveState() {
-  _window.draw(_backgroundSprite);
-  for (auto &starDust : _starDustContainerInBackground.getElements()) {
-    _window.draw(starDust.getSprite());
-  }
-  _window.draw(_rocket.getSprite());
-  _window.draw(_moon.getSprite());
-  for (auto &starDust : _starDustContainerInForeground.getElements()) {
-    _window.draw(starDust.getSprite());
-  }
-}
-
-void MainWindow::drawInSuccessState() { _window.clear(Color::Yellow); }
-void MainWindow::drawInFailureState() { _window.clear(Color::Red); }
-
 std::thread MainWindow::getAndRunUpdatingDataThread() {
   auto runningUpdateInLoopLambda = [this]() {
     schedulingManagment::setAndLogSchedulingPolicyAndPriority(
@@ -152,7 +90,81 @@ std::thread MainWindow::getAndRunUpdatingSimulationStatusThread() {
   return updatingThread;
 }
 
-//// COMMUNICATION SETUP
+void MainWindow::input() {
+
+  if (Keyboard::isKeyPressed(Keyboard::Escape)) {
+    LG_INF("MAIN WINDOW - ESC WAS PRESSED, CLOSING WINDOW, EXITING LOOP");
+    _window.close();
+  }
+}
+
+void MainWindow::updateVisualData() {
+  auto newData = getVisualizationData();
+  updateElementsState(newData);
+}
+
+void MainWindow::updateSimulationState() {
+  auto newData = getSimulationStatusData();
+  updateSimulationState(newData);
+}
+
+void MainWindow::draw() {
+  _window.clear(Color::White);
+
+  switch (_simulationState) {
+  case SimulationStatus::READY_TO_START:
+    drawInReadyToStartState();
+    break;
+
+  case SimulationStatus::ACTIVE:
+    drawInActiveState();
+    break;
+
+  case SimulationStatus::SUCCESS:
+    drawInSuccessState();
+    break;
+
+  case SimulationStatus::FAILURE:
+    drawInFailureState();
+    break;
+
+  default:
+    break;
+  }
+
+  _window.display();
+}
+
+void MainWindow::drawInReadyToStartState() {
+  updateBackgroundSprite();
+  _window.draw(_backgroundSprite);
+}
+
+void MainWindow::drawInActiveState() {
+
+  updateBackgroundSprite();
+  _window.draw(_backgroundSprite);
+
+  for (auto &starDust : _starDustContainerInBackground.getElements()) {
+    _window.draw(starDust.getSprite());
+  }
+  _window.draw(_rocket.getSprite());
+  _window.draw(_moon.getSprite());
+  for (auto &starDust : _starDustContainerInForeground.getElements()) {
+    _window.draw(starDust.getSprite());
+  }
+}
+
+void MainWindow::drawInSuccessState() {
+  updateBackgroundSprite();
+  _window.draw(_backgroundSprite);
+}
+void MainWindow::drawInFailureState() {
+  updateBackgroundSprite();
+  _window.draw(_backgroundSprite);
+}
+
+// COMMUNICATION SETUP
 void MainWindow::openQueues() {
 
   // SIMULATION STATUS
@@ -192,7 +204,7 @@ void MainWindow::closeQueues() {
   }
 }
 
-//// COMMUNICATION
+// COMMUNICATION
 
 msg::RocketVisualizationContainerMsg MainWindow::getVisualizationData() {
 
@@ -218,7 +230,7 @@ msg::SimulationStatusMsg MainWindow::getSimulationStatusData() {
   return simulationStatusMsg;
 }
 
-//// DATA MANAGMENT
+// DATA MANAGMENT
 
 void MainWindow::updateElementsState(
     const msg::RocketVisualizationContainerMsg &visualizationContainerMsg) {
@@ -264,7 +276,7 @@ void MainWindow::updateStarDust(
       visualizationContainerMsg.rockePosition);
 }
 
-//// SETUP HELPERS
+// SETUP HELPERS
 void MainWindow::setWindowSizeAndPosition(const Vector2i &referencePoint) {
   _window.create(
       VideoMode(common::MAIN_WINDOW_X_SIZE, common::MAIN_WINDOW_Y_SIZE),
@@ -274,10 +286,43 @@ void MainWindow::setWindowSizeAndPosition(const Vector2i &referencePoint) {
 
 void MainWindow::setTexturesAndSprites() {
   // BACKGROUND
+  auto stateVariableBackgroundPath =
+      common::IMG_ABS_PATH + "background/stateVariableBackground/";
+  LG_INF("MAIN WINDOW IMG PATH -> " + stateVariableBackgroundPath);
+  _readyToStartStateBackgroundTexture.loadFromFile(stateVariableBackgroundPath +
+                                                   "startBackground1" + ".png");
+  _activeStateBackgroundTexture.loadFromFile(stateVariableBackgroundPath +
+                                             "activeBackground1" + ".png");
+  _successStateBackgroundTexture.loadFromFile(stateVariableBackgroundPath +
+                                              "successBackground1" + ".png");
+  _failureStateBackgroundTexture.loadFromFile(stateVariableBackgroundPath +
+                                              "failureBackground1" + ".png");
 
-  _backgroundTexture.loadFromFile(common::IMG_ABS_PATH + "background3.jpg");
+  updateBackgroundSprite();
+}
 
-  _backgroundSprite.setTexture(_backgroundTexture);
+void MainWindow::checkStateAndUpdateCurrentBackgroundSpriteTexture() {
+  switch (_simulationState) {
+  case SimulationStatus::READY_TO_START:
+    _backgroundSprite.setTexture(_readyToStartStateBackgroundTexture);
+    break;
+  case SimulationStatus::ACTIVE:
+    _backgroundSprite.setTexture(_activeStateBackgroundTexture);
+    break;
+  case SimulationStatus::SUCCESS:
+    _backgroundSprite.setTexture(_successStateBackgroundTexture);
+    break;
+  case SimulationStatus::FAILURE:
+    _backgroundSprite.setTexture(_failureStateBackgroundTexture);
+    break;
+
+  default:
+    LG_ERR("MAIN WINDOW - UPDATING BACKGROUND TEXTURE - UNKNOWN STATE");
+  }
+}
+
+void MainWindow::updateBackgroundSprite() {
+  checkStateAndUpdateCurrentBackgroundSpriteTexture();
   _backgroundSprite.setScale(
       common::MAIN_WINDOW_X_SIZE / _backgroundSprite.getLocalBounds().width,
       common::MAIN_WINDOW_Y_SIZE / _backgroundSprite.getLocalBounds().height);
@@ -287,4 +332,25 @@ void MainWindow::setUpElements() {
   /*
     NOTHING YET
   */
+}
+
+// Debug
+
+void MainWindow::LogSimulationState(const SimulationStatus &status) {
+  switch (status) {
+  case SimulationStatus::READY_TO_START:
+    LG_INF("MAIN WINDOW - SIMULATION STATE - READY_TO_START");
+    break;
+  case SimulationStatus::ACTIVE:
+    LG_INF("MAIN WINDOW - SIMULATION STATE - ACTIVE");
+    break;
+  case SimulationStatus::SUCCESS:
+    LG_INF("MAIN WINDOW - SIMULATION STATE - SUCCESS");
+    break;
+  case SimulationStatus::FAILURE:
+    LG_INF("MAIN WINDOW - SIMULATION STATE - FAILURE");
+    break;
+  default:
+    LG_ERR("MAIN WINDOW - SIMULATION STATE - UNKNOWN STATE");
+  }
 }
